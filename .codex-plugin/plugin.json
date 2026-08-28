@@ -1,25 +1,25 @@
 {
-  "name": "jl-private-knowledge-client",
-  "version": "0.3.0",
+  "name": "jl-knowledge-base-skill",
+  "version": "0.3.1",
   "description": "Free JL SDK engineering help with shared task-relevant knowledge for Codex.",
   "author": {
     "name": "JL Firmware Platform Team",
     "url": "https://github.com/dongke141219"
   },
-  "homepage": "https://github.com/dongke141219/jl-private-knowledge-client",
-  "repository": "https://github.com/dongke141219/jl-private-knowledge-client",
+  "homepage": "https://github.com/dongke141219/jl-knowledge-base-skill",
+  "repository": "https://github.com/dongke141219/jl-knowledge-base-skill",
   "license": "MIT",
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
-    "displayName": "JL SDK Knowledge & Engineer",
+    "displayName": "JL Knowledge Base Skill",
     "shortDescription": "Use shared JL SDK experience in Codex.",
     "longDescription": "Helps Codex locate JL SDK implementation points, solve project issues, apply relevant shared experience, and verify changes with the project's own build entry.",
     "developerName": "JL Firmware Platform Team",
     "category": "Developer Tools",
-    "websiteURL": "https://github.com/dongke141219/jl-private-knowledge-client",
-    "privacyPolicyURL": "https://github.com/dongke141219/jl-private-knowledge-client/blob/main/PRIVACY.md",
-    "termsOfServiceURL": "https://github.com/dongke141219/jl-private-knowledge-client/blob/main/TERMS.md",
+    "websiteURL": "https://github.com/dongke141219/jl-knowledge-base-skill",
+    "privacyPolicyURL": "https://github.com/dongke141219/jl-knowledge-base-skill/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/dongke141219/jl-knowledge-base-skill/blob/main/TERMS.md",
     "capabilities": [
       "Read",
       "Write"

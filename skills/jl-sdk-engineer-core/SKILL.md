@@ -1,6 +1,6 @@
 ---
 name: jl-sdk-engineer-core
-description: Implement, diagnose, and build a local Jieli (JL) SDK project using a public knowledge-free workflow. Use for JL firmware source or configuration changes, Makefile builds, migration, debugging, and evidence capture. Pair with $jl-private-knowledge-client for task-scoped private guidance and consented sanitized contribution; never expect private assets or a complete knowledge corpus in this skill.
+description: Implement, diagnose, and build a local Jieli (JL) SDK project using a public knowledge-free workflow. Use for JL firmware source or configuration changes, Makefile builds, migration, debugging, and evidence capture. Pair with $jl-knowledge-base-skill for task-scoped shared guidance and consented sanitized contribution; never expect private assets or a complete knowledge corpus in this skill.
 ---
 
 # JL SDK Engineer Core
@@ -16,7 +16,7 @@ Work only in the SDK and supporting files that the current user has lawfully pro
 
 ## Obtain only task-scoped guidance
 
-Invoke `$jl-private-knowledge-client` when a JL-specific prior implementation would materially help the current decision. Ask one narrow question and use at most the returned task-relevant fragments. Preserve each fragment's evidence level, scope, layer, and limitations. Never browse, enumerate, persist, republish, or try to reconstruct the private corpus.
+Invoke `$jl-knowledge-base-skill` when a JL-specific prior implementation would materially help the current decision. Ask one narrow question and use at most the returned task-relevant fragments. Preserve each fragment's evidence level, scope, layer, and limitations. Never browse, enumerate, persist, republish, or try to reconstruct the private corpus.
 
 When classifying new experience, use the canonical product/domain pair defined by the companion skill. Do not create singular spelling variants or ad-hoc domains: one product function must keep growing on one stable chain.
 
@@ -42,7 +42,7 @@ A static check, plausible code, copied reference, IDE export, or generated file 
 
 ## Capture and contribute safely
 
-Keep any project-local note short, scoped, and free of credentials or signing material. After substantive work, use `$jl-private-knowledge-client` to create the smallest reusable product-to-problem chain from evidence produced in this task. Follow its one-time consent, outbox, privacy, idempotency, withdrawal, and retry rules exactly.
+Keep any project-local note short, scoped, and free of credentials or signing material. After substantive work, use `$jl-knowledge-base-skill` to create the smallest reusable product-to-problem chain from evidence produced in this task. Follow its one-time consent, outbox, privacy, idempotency, withdrawal, and retry rules exactly.
 
 Do not upload source, source excerpts, raw logs, complete configuration, customer or company identity, project paths, host/network identifiers, firmware, archives, KEY material, credentials, private protocol payloads, or text returned by the private gateway. Automatic contribution is best effort and must not change the engineering task's success or rollback behavior.
 

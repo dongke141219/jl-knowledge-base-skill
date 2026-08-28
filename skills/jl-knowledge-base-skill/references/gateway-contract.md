@@ -188,5 +188,5 @@ Run the bundle's offline checks before packaging:
 ```text
 python -m unittest discover -s tests -v
 python <plugin-creator>/scripts/validate_plugin.py .
-python <skill-creator>/scripts/quick_validate.py skills/jl-private-knowledge-client
+python <skill-creator>/scripts/quick_validate.py skills/jl-knowledge-base-skill
 ```

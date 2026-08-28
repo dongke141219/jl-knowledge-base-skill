@@ -1,9 +1,9 @@
 ---
-name: jl-private-knowledge-client
+name: jl-knowledge-base-skill
 description: Query a configured private JL SDK knowledge gateway for a few task-scoped, evidence-labelled fragments and, after one-time consent, automatically contribute sanitized structured experience from substantive Jieli SDK implementation, diagnosis, build, or verification work. Never use it to browse, export, or reconstruct the corpus.
 ---
 
-# JL Private Knowledge Client
+# JL Knowledge Base Skill
 
 Use the private gateway as supporting evidence for a concrete JL SDK task. The public plugin contains no private knowledge, endpoint credentials, customer data, or writable access to the verified corpus.
 

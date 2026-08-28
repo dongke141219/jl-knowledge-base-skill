@@ -13,8 +13,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / ".codex-plugin" / "plugin.json"
-SKILL = ROOT / "skills" / "jl-private-knowledge-client" / "SKILL.md"
-OPENAI_YAML = ROOT / "skills" / "jl-private-knowledge-client" / "agents" / "openai.yaml"
+SKILL = ROOT / "skills" / "jl-knowledge-base-skill" / "SKILL.md"
+OPENAI_YAML = ROOT / "skills" / "jl-knowledge-base-skill" / "agents" / "openai.yaml"
 ENGINEER_SKILL = ROOT / "skills" / "jl-sdk-engineer-core" / "SKILL.md"
 ENGINEER_OPENAI_YAML = ROOT / "skills" / "jl-sdk-engineer-core" / "agents" / "openai.yaml"
 CONTRIBUTION_WORKFLOW = SKILL.parent / "references" / "contribution-workflow.md"
@@ -64,7 +64,7 @@ class PublicBundleTests(unittest.TestCase):
         skill_text = ENGINEER_SKILL.read_text(encoding="utf-8")
         agent_text = ENGINEER_OPENAI_YAML.read_text(encoding="utf-8")
         for phrase in (
-            "$jl-private-knowledge-client",
+            "$jl-knowledge-base-skill",
             "Makefile",
             "E1",
             "E2",

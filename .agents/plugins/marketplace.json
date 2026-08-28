@@ -1,14 +1,14 @@
 {
   "name": "jl-knowledge",
   "interface": {
-    "displayName": "JL SDK Knowledge"
+    "displayName": "JL Knowledge Base"
   },
   "plugins": [
     {
-      "name": "jl-private-knowledge-client",
+      "name": "jl-knowledge-base-skill",
       "source": {
         "source": "url",
-        "url": "https://github.com/dongke141219/jl-private-knowledge-client.git",
+        "url": "https://github.com/dongke141219/jl-knowledge-base-skill.git",
         "ref": "main"
       },
       "policy": {

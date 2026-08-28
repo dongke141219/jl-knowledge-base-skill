@@ -181,11 +181,11 @@ def default_state_dir() -> Path:
         return Path(override).expanduser()
     xdg_state = os.environ.get("XDG_STATE_HOME")
     if xdg_state:
-        return Path(xdg_state).expanduser() / "jl-private-knowledge-client"
+        return Path(xdg_state).expanduser() / "jl-knowledge-base-skill"
     local_app_data = os.environ.get("LOCALAPPDATA")
     if os.name == "nt" and local_app_data:
         return Path(local_app_data) / "JLPrivateKnowledgeClient"
-    return Path.home() / ".local" / "state" / "jl-private-knowledge-client"
+    return Path.home() / ".local" / "state" / "jl-knowledge-base-skill"
 
 
 def _ensure_state_dirs(root: Path) -> None:

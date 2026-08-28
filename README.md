@@ -1,4 +1,4 @@
-# 免费 JL SDK 知识库与 AI 工程助手
+# JL Knowledge Base Skill
 
 这是一个面向杰理（JL）SDK 开发者的 Codex Plugin。打开自己的 JL SDK，直接告诉 Codex 客户需要什么，它会结合当前项目和共享经验完成分析、修改与编译验证。
 
@@ -19,10 +19,10 @@
 先在终端运行：
 
 ```text
-codex plugin marketplace add dongke141219/jl-private-knowledge-client --ref main
+codex plugin marketplace add dongke141219/jl-knowledge-base-skill --ref main
 ```
 
-然后重启 Codex，在 **Plugins** 中找到 **JL SDK Knowledge & Engineer** 并安装。
+然后重启 Codex，在 **Plugins** 中找到 **JL Knowledge Base Skill** 并安装。
 
 不需要注册客户网页账号，不需要登录、申请、等待批准或领取个人凭据。公开服务开启时，安装后即可使用。
 
@@ -59,17 +59,17 @@ JL 知识服务免费提供；使用者自己的 Codex 账号、订阅和模型�
 
 ---
 
-# Free JL SDK Knowledge & AI Engineer
+# JL Knowledge Base Skill
 
 A Codex Plugin for working on Jieli (JL) SDK projects with task-relevant shared experience. It helps locate implementation points, modify the current project, diagnose issues, run the project's own build, and separate build results from remaining hardware checks.
 
 ## Install
 
 ```text
-codex plugin marketplace add dongke141219/jl-private-knowledge-client --ref main
+codex plugin marketplace add dongke141219/jl-knowledge-base-skill --ref main
 ```
 
-Restart Codex, open **Plugins**, and install **JL SDK Knowledge & Engineer**. No customer-platform registration, login, application, approval, or individual credential is required.
+Restart Codex, open **Plugins**, and install **JL Knowledge Base Skill**. No customer-platform registration, login, application, approval, or individual credential is required.
 
 ## Use
 

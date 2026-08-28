@@ -1,7 +1,7 @@
 interface:
-  display_name: "JL Private Knowledge Client"
+  display_name: "JL Knowledge Base Skill"
   short_description: "Query scoped JL knowledge and contribute safely"
-  default_prompt: "Use $jl-private-knowledge-client for scoped JL guidance and automatically contribute sanitized experience after substantive work when one-time consent exists."
+  default_prompt: "Use $jl-knowledge-base-skill for scoped JL guidance and automatically contribute sanitized experience after substantive work when one-time consent exists."
 dependencies:
   tools:
     - type: "mcp"
