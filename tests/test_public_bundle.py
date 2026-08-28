@@ -189,7 +189,6 @@ class PublicBundleTests(unittest.TestCase):
             "可以做什么",
             "安装",
             "不需要注册客户网页账号，不需要登录、申请、等待批准或领取个人凭据",
-            "停止后所有 GitHub 用户都无法取得共享知识",
             "JL Knowledge Base Skill",
             "No customer-platform registration, login, application, approval, or individual credential is required",
         ):

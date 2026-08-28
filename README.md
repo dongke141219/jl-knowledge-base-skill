@@ -53,8 +53,6 @@ JL 知识服务免费提供；使用者自己的 Codex 账号、订阅和模型�
 
 第一次需要贡献新经验时，Codex 会先说明脱敏范围并征求一次同意。不同意不会上传本地内容。源码、客户资料、完整日志、路径、固件、KEY、密码、令牌和私有协议内容不会作为知识贡献上传。
 
-维护者可以统一开启或停止公开知识服务。停止后所有 GitHub 用户都无法取得共享知识，但 Plugin 仍可继续处理用户自己的本地 SDK。
-
 [隐私说明](PRIVACY.md) · [使用条款](TERMS.md) · [MIT License](LICENSE)
 
 ---
@@ -81,6 +79,6 @@ Use relevant JL knowledge, run the project's own Makefile, and report the result
 and the remaining hardware checks.
 ```
 
-The shared service returns only a few task-relevant, evidence-labelled fragments. The maintainer may stop the public service for every GitHub user at once; local SDK work remains available.
+The shared service returns only a few task-relevant, evidence-labelled fragments.
 
 [Privacy Notice](PRIVACY.md) · [Terms of Use](TERMS.md) · [MIT License](LICENSE)
