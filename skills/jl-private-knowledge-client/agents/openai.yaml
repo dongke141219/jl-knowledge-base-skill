@@ -1,0 +1,13 @@
+interface:
+  display_name: "JL Private Knowledge Client"
+  short_description: "Query scoped JL knowledge and contribute safely"
+  default_prompt: "Use $jl-private-knowledge-client for scoped JL guidance and automatically contribute sanitized experience after substantive work when one-time consent exists."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "jl_private_knowledge"
+      description: "Private JL knowledge gateway with server-created tasks, scoped query, and automatic unverified-incubator contribution"
+      transport: "streamable_http"
+      url: "https://jl-knowledge-gateway.example.invalid/knowledge/mcp"
+policy:
+  allow_implicit_invocation: true

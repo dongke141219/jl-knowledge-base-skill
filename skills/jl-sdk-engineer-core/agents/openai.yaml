@@ -1,0 +1,6 @@
+interface:
+  display_name: "JL SDK Engineer Core"
+  short_description: "Build local JL firmware without shipping the private corpus"
+  default_prompt: "Use $jl-sdk-engineer-core to inspect, implement, build, and evidence this local JL SDK task; use $jl-private-knowledge-client only for scoped private guidance and sanitized contribution."
+policy:
+  allow_implicit_invocation: true

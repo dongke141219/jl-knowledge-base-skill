@@ -1,0 +1,32 @@
+{
+  "name": "jl-private-knowledge-client",
+  "version": "0.2.0",
+  "description": "Public JL SDK engineering shell with scoped private-knowledge lookup and consented sanitized contribution.",
+  "author": {
+    "name": "JL Firmware Platform Team",
+    "url": "https://github.com/dongke141219"
+  },
+  "homepage": "https://github.com/dongke141219/jl-private-knowledge-client",
+  "repository": "https://github.com/dongke141219/jl-private-knowledge-client",
+  "license": "MIT",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "JL Private Knowledge Client",
+    "shortDescription": "Build JL SDK projects without exposing the private corpus.",
+    "longDescription": "Provides a knowledge-free JL SDK engineering workflow, queries a configured private gateway for a few task-relevant fragments, and after one-time consent automatically submits privacy-checked structured experience to the unverified incubator.",
+    "developerName": "JL Firmware Platform Team",
+    "category": "Developer Tools",
+    "websiteURL": "https://github.com/dongke141219/jl-private-knowledge-client",
+    "privacyPolicyURL": "https://github.com/dongke141219/jl-private-knowledge-client/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/dongke141219/jl-private-knowledge-client/blob/main/TERMS.md",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Use the public JL SDK engineering shell to implement and build this local project.",
+      "Find evidence-labelled JL guidance for this SDK issue.",
+      "Automatically contribute sanitized experience from this substantive JL task."
+    ]
+  }
+}
