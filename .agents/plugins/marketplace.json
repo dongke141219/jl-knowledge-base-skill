@@ -1,0 +1,21 @@
+{
+  "name": "jl-knowledge",
+  "interface": {
+    "displayName": "JL SDK Knowledge"
+  },
+  "plugins": [
+    {
+      "name": "jl-private-knowledge-client",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/dongke141219/jl-private-knowledge-client.git",
+        "ref": "main"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

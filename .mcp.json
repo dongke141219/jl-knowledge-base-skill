@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "jl_private_knowledge": {
+      "type": "http",
+      "url": "https://feels-pieces-functionality-peter.trycloudflare.com/knowledge/mcp"
+    }
+  }
+}

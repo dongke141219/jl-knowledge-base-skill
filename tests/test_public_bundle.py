@@ -18,8 +18,9 @@ OPENAI_YAML = ROOT / "skills" / "jl-private-knowledge-client" / "agents" / "open
 ENGINEER_SKILL = ROOT / "skills" / "jl-sdk-engineer-core" / "SKILL.md"
 ENGINEER_OPENAI_YAML = ROOT / "skills" / "jl-sdk-engineer-core" / "agents" / "openai.yaml"
 CONTRIBUTION_WORKFLOW = SKILL.parent / "references" / "contribution-workflow.md"
+GATEWAY_CONTRACT = SKILL.parent / "references" / "gateway-contract.md"
 OUTBOX = ROOT / "scripts" / "knowledge_outbox.py"
-PLACEHOLDER_URL = "https://jl-knowledge-gateway.example.invalid/knowledge/mcp"
+PUBLIC_MCP_URL = "https://feels-pieces-functionality-peter.trycloudflare.com/knowledge/mcp"
 CONSENT_PHRASE = "I_AGREE_TO_AUTOMATIC_SANITIZED_JL_KNOWLEDGE_CONTRIBUTION"
 REVOCATION_PHRASE = "REVOKE_AND_DELETE_PENDING_CONTRIBUTIONS"
 SANITIZATION_ACK = "STRUCTURED_ONLY_NO_SOURCE_LOG_IDENTITY_PATH_KEY_OR_CREDENTIAL"
@@ -30,6 +31,7 @@ def public_text() -> str:
         path
         for path in ROOT.rglob("*")
         if path.is_file()
+        and ".git" not in path.relative_to(ROOT).parts
         and "__pycache__" not in path.parts
         and path.suffix != ".pyc"
     )
@@ -42,6 +44,9 @@ class PublicBundleTests(unittest.TestCase):
         self.assertEqual(payload["name"], ROOT.name)
         self.assertRegex(payload["version"], r"^\d+\.\d+\.\d+$")
         self.assertEqual(payload["skills"], "./skills/")
+        self.assertEqual(payload["mcpServers"], "./.mcp.json")
+        mcp = json.loads((ROOT / ".mcp.json").read_text(encoding="utf-8"))
+        self.assertEqual(mcp["mcpServers"]["jl_private_knowledge"]["url"], PUBLIC_MCP_URL)
         self.assertTrue(payload["author"]["name"])
         self.assertTrue(payload["interface"]["displayName"])
 
@@ -49,7 +54,7 @@ class PublicBundleTests(unittest.TestCase):
         yaml_text = OPENAI_YAML.read_text(encoding="utf-8")
         self.assertIn('type: "mcp"', yaml_text)
         self.assertIn('transport: "streamable_http"', yaml_text)
-        self.assertIn(f'url: "{PLACEHOLDER_URL}"', yaml_text)
+        self.assertIn(f'url: "{PUBLIC_MCP_URL}"', yaml_text)
         skill_text = SKILL.read_text(encoding="utf-8")
         self.assertIn("create_knowledge_task", skill_text)
         self.assertIn("query_task_fragments", skill_text)
@@ -172,6 +177,36 @@ class PublicBundleTests(unittest.TestCase):
             "30 days",
         ):
             self.assertIn(phrase, text)
+
+    def test_public_access_is_separate_from_customer_platform_and_internal_worker(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        privacy = (ROOT / "PRIVACY.md").read_text(encoding="utf-8")
+        terms = (ROOT / "TERMS.md").read_text(encoding="utf-8")
+        skill = SKILL.read_text(encoding="utf-8")
+        contract = GATEWAY_CONTRACT.read_text(encoding="utf-8")
+
+        for phrase in (
+            "可以做什么",
+            "安装",
+            "不需要注册客户网页账号，不需要登录、申请、等待批准或领取个人凭据",
+            "停止后所有 GitHub 用户都无法取得共享知识",
+            "Free JL SDK Knowledge & AI Engineer",
+            "No customer-platform registration, login, application, approval, or individual credential is required",
+        ):
+            self.assertIn(phrase, readme)
+
+        self.assertIn("匿名限流", privacy)
+        self.assertIn("客户网页任务", terms)
+        self.assertIn("Public knowledge access requires no registration", skill)
+        self.assertIn("/api/worker/knowledge/*", contract)
+        self.assertIn("one operator-controlled master switch", contract)
+        for obsolete in (
+            "安装 Plugin 不会自动获得知识库访问资格",
+            "独立安装凭据",
+            "public installation credential",
+            "per-installation authentication",
+        ):
+            self.assertNotIn(obsolete, readme + privacy + terms + skill + contract)
 
 
 class OutboxTests(unittest.TestCase):

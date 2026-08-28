@@ -1,10 +1,12 @@
 # Gateway contract and configuration
 
-The checked-in URL in `agents/openai.yaml` is intentionally non-routable. Before distributing an installable build, replace only that URL with the organization-controlled HTTPS MCP endpoint. Keep authentication in the MCP/OAuth connection flow; never place a token, password, NAS address, or client secret in this plugin.
+The checked-in URL in `agents/openai.yaml` is intentionally non-routable. Before distributing an installable build, replace only that URL with the organization-controlled HTTPS MCP endpoint. The public endpoint is anonymous: never place a token, password, NAS address, client secret, registration flow, or approval flow in this plugin. A GitHub user does not register or sign in to the customer web platform.
 
-The public endpoint is a gateway, not direct NAS or filesystem access. It exposes only three MCP tools. Every query and candidate submission must carry a `task_id` issued by `create_knowledge_task`. The server binds that ID to the authenticated access key and its declared product/chip/SDK scope, rejects missing, expired, invented, or cross-key IDs, and never offers task enumeration.
+The public endpoint is a gateway, not direct NAS or filesystem access. It exposes only three MCP tools. Every query and candidate submission must carry a random, short-lived `task_id` issued by `create_knowledge_task`. The server binds that ID to the anonymous network-rate bucket and the declared product/chip/SDK scope, rejects missing, expired, invented, or cross-bucket IDs, and never offers task enumeration.
 
-One-time contribution consent and the offline outbox are local client concerns described in `contribution-workflow.md`; they are not gateway credentials. The helper makes no network or model calls. The MCP connection belongs to the current user, and no gateway request starts or consumes the knowledge owner's Codex CLI.
+Public GitHub access and the internal platform are separate channels. The public gateway has one operator-controlled master switch and no per-user approval or credential management. Turning on that switch makes the anonymous service available to every public installation; turning it off makes all public task, query, proposal, and MCP requests unavailable immediately while leaving `/api/worker/knowledge/*`, the owner's full global Skill, customer web jobs, and the Windows build host unaffected. The internal worker bearer is never accepted by the public gateway.
+
+One-time contribution consent and the offline outbox are local client concerns described in `contribution-workflow.md`; they are not registration, approval, or gateway credentials. The helper makes no network or model calls. The MCP connection belongs to the current user, and no gateway request starts or consumes the knowledge owner's Codex CLI.
 
 ## `create_knowledge_task`
 
@@ -22,7 +24,7 @@ Request:
 }
 ```
 
-`purpose` is always required. `chip` may be omitted only when the access key is restricted to exactly one chip, which the server then fills; a multi-chip key must choose an allowed chip. The client creates one task for one concrete work item and must not invent, enumerate, share, or reuse its ID for another account or task.
+`purpose` and a concrete `chip` are always required for anonymous public access. The client creates one task for one concrete work item and must not invent, enumerate, share, or reuse its ID for another user or task.
 
 Response:
 
@@ -55,12 +57,12 @@ Request:
 {
   "task_id": "Server-issued opaque task identifier",
   "query": "Specific sanitized question or decision",
-  "include_incubator": false,
+  "include_incubator": true,
   "limit": 5
 }
 ```
 
-The gateway rejects empty, wildcard, enumeration, range, inventory, pagination, bulk, document-fetch, and export requests. `include_incubator` requires a separate access scope. `limit` can never exceed the server cap.
+The gateway rejects empty, wildcard, enumeration, range, inventory, pagination, bulk, document-fetch, and export requests. The anonymous public service permits `include_incubator: true` so E1/E2 experience can be returned with its evidence label and limitations. `limit` can never exceed the server cap.
 
 Response:
 
@@ -172,11 +174,12 @@ After an administrator withdraws an accepted source, replaying that same idempot
 
 ## Minimum deployment controls
 
-- Public HTTPS MCP transport with per-user authentication and revocation.
-- Separate task-create, verified-query, incubator-query, and candidate-submit scopes.
-- Server-bound, expiring `task_id` on every query and submission, with no task listing and no cross-key reuse.
+- Public HTTPS MCP transport with anonymous access and no registration, login, approval, or individual credential.
+- One public-only master switch: enabled means every public installation can use the service, disabled means every public installation is stopped; the switch must not gate internal worker knowledge routes.
+- Public task-create, verified-query, and candidate-submit capabilities; anonymous public access cannot request the internal incubator-read capability.
+- Server-bound, expiring `task_id` on every query and submission, with no task listing and no cross-bucket reuse.
 - Mandatory server-controlled `product_id` and `domain_id` pair on every candidate; reject identity-derived or invented IDs and include both in semantic deduplication.
-- Maximum five fragments and 24 KiB per response, output redaction, per-key atomic rate limits, active/daily task limits, daily unique-fragment budgets, request-count limits, audit logging, and reconstruction-abuse detection.
+- Maximum five fragments and 24 KiB per response, output redaction, anonymous network-bucket atomic rate limits, active/daily task limits, a public global daily unique-fragment budget, request-count limits, audit logging, and reconstruction-abuse detection.
 - Verified knowledge isolated from the automatically searchable unverified incubator and promoted only with platform-held evidence and administrator policy.
 - No general NAS, shell, database, source-document, or filesystem tool.
 
