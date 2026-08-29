@@ -41,7 +41,7 @@ def public_text() -> str:
 class PublicBundleTests(unittest.TestCase):
     def test_manifest_is_distribution_ready(self) -> None:
         payload = json.loads(MANIFEST.read_text(encoding="utf-8"))
-        self.assertEqual(payload["name"], ROOT.name)
+        self.assertEqual(payload["name"], "jl-knowledge-base-skill")
         self.assertRegex(
             payload["version"], r"^\d+\.\d+\.\d+(?:\+codex\.\d{14})?$"
         )
