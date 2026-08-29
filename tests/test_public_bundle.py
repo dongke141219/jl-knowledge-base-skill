@@ -232,7 +232,7 @@ class PublicBundleTests(unittest.TestCase):
             "为什么会越用越智能",
             "可能减少 Token 消耗",
             "Gemini CLI 全新安装",
-            "gemini extensions install https://github.com/dongke141219/jl-knowledge-base-skill --ref main --auto-update",
+            "gemini extensions install https://github.com/dongke141219/jl-knowledge-base-skill --auto-update",
             "gemini extensions update jl-knowledge-base-skill",
             "不要求用户每次手动填写芯片",
             "不需要注册客户网页账号，不需要登录、申请、等待批准或领取个人凭据",
