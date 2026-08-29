@@ -13,6 +13,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / ".codex-plugin" / "plugin.json"
+GEMINI_MANIFEST = ROOT / "gemini-extension.json"
+GEMINI_CONTEXT = ROOT / "GEMINI.md"
 SKILL = ROOT / "skills" / "jl-knowledge-base-skill" / "SKILL.md"
 OPENAI_YAML = ROOT / "skills" / "jl-knowledge-base-skill" / "agents" / "openai.yaml"
 ENGINEER_SKILL = ROOT / "skills" / "jl-sdk-engineer-core" / "SKILL.md"
@@ -52,6 +54,38 @@ class PublicBundleTests(unittest.TestCase):
         self.assertTrue(payload["author"]["name"])
         self.assertTrue(payload["interface"]["displayName"])
 
+    def test_gemini_extension_is_distribution_ready(self) -> None:
+        payload = json.loads(GEMINI_MANIFEST.read_text(encoding="utf-8"))
+        self.assertEqual(payload["name"], "jl-knowledge-base-skill")
+        self.assertRegex(payload["version"], r"^\d+\.\d+\.\d+$")
+        self.assertEqual(payload["contextFileName"], "GEMINI.md")
+        server = payload["mcpServers"]["jl_private_knowledge"]
+        self.assertEqual(server["httpUrl"], PUBLIC_MCP_URL)
+        self.assertEqual(
+            set(server["includeTools"]),
+            {
+                "create_knowledge_task",
+                "query_task_fragments",
+                "submit_knowledge_candidate",
+            },
+        )
+        self.assertNotIn("trust", server)
+        self.assertNotIn("headers", server)
+
+        context = GEMINI_CONTEXT.read_text(encoding="utf-8")
+        for phrase in (
+            "The user does not need to memorize a fixed prompt or always type a chip model",
+            "inspect its local configuration",
+            "Ask one plain-language clarification",
+            "create_knowledge_task",
+            "query_task_fragments",
+            "three allowlisted knowledge tools",
+        ):
+            self.assertIn(phrase, context)
+
+        self.assertTrue((ROOT / "commands" / "jl" / "implement.toml").is_file())
+        self.assertTrue((ROOT / "commands" / "jl" / "diagnose.toml").is_file())
+
     def test_skill_declares_scoped_mcp_dependency(self) -> None:
         yaml_text = OPENAI_YAML.read_text(encoding="utf-8")
         self.assertIn('type: "mcp"', yaml_text)
@@ -71,7 +105,7 @@ class PublicBundleTests(unittest.TestCase):
             "E1",
             "E2",
             "E3",
-            "current user's Codex/AI account",
+            "current user's selected AI coding client",
             "contains no private corpus",
         ):
             self.assertIn(phrase, skill_text)
@@ -143,7 +177,7 @@ class PublicBundleTests(unittest.TestCase):
             "Do not expose a `list`",
             "one-time consent",
             "outbox-first",
-            "never run or contact the knowledge owner's Codex CLI",
+            "never run or contact the knowledge owner's AI coding client",
             "product → domain → capability → subfeature → boundary → issue",
         ):
             self.assertIn(phrase, text)
@@ -197,6 +231,10 @@ class PublicBundleTests(unittest.TestCase):
             "UI 交互文档",
             "为什么会越用越智能",
             "可能减少 Token 消耗",
+            "Gemini CLI 全新安装",
+            "gemini extensions install https://github.com/dongke141219/jl-knowledge-base-skill --auto-update",
+            "gemini extensions update jl-knowledge-base-skill",
+            "不要求用户每次手动填写芯片",
             "不需要注册客户网页账号，不需要登录、申请、等待批准或领取个人凭据",
             "JL Knowledge Base Skill",
             "No customer-platform registration, login, application, approval, or individual credential is required",

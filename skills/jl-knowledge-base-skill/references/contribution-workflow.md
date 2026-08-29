@@ -1,6 +1,6 @@
 # Automatic contribution workflow
 
-The outbox helper is at `scripts/knowledge_outbox.py` in the plugin bundle. It requires Python 3.10 or newer and uses only the standard library. It never connects to a network, invokes Codex, reads a project tree, or discovers files. The caller supplies one already-sanitized candidate JSON object.
+The outbox helper is at `scripts/knowledge_outbox.py` in the public bundle. It requires Python 3.10 or newer and uses only the standard library. It never connects to a network, invokes Codex or Gemini CLI, reads a project tree, or discovers files. The caller supplies one already-sanitized candidate JSON object.
 
 The helper stores state in the current operating-system user's application-state directory. `JL_KNOWLEDGE_CLIENT_HOME` may override that location for a managed installation or tests. The directory contains only the current consent receipt, counters, and unsent sanitized candidate envelopes. It contains no endpoint, token, `task_id`, customer identity, source, raw log, KEY, or returned private fragment. Successfully submitted entries are deleted; unsent entries expire after 30 days.
 
@@ -76,7 +76,7 @@ python <bundle-root>/scripts/knowledge_outbox.py drop --id <entry-id> --reason s
 
 Only a genuinely corrected implementation or evidence record should be submitted again; its normalized content will produce a different SHA-256 key.
 
-Synchronization is best effort. Do not delay the main JL result indefinitely, mark it failed, or run the owner's Codex because the gateway is offline.
+Synchronization is best effort. Do not delay the main JL result indefinitely, mark it failed, or run the owner's AI coding client because the gateway is offline.
 
 ## Candidate shape
 

@@ -6,7 +6,7 @@ The public endpoint is a gateway, not direct NAS or filesystem access. It expose
 
 Public GitHub access and the internal platform are separate channels. The public gateway has one operator-controlled master switch and no per-user approval or credential management. Turning on that switch makes the anonymous service available to every public installation; turning it off makes all public task, query, proposal, and MCP requests unavailable immediately while leaving `/api/worker/knowledge/*`, the owner's full global Skill, customer web jobs, and the Windows build host unaffected. The internal worker bearer is never accepted by the public gateway.
 
-One-time contribution consent and the offline outbox are local client concerns described in `contribution-workflow.md`; they are not registration, approval, or gateway credentials. The helper makes no network or model calls. The MCP connection belongs to the current user, and no gateway request starts or consumes the knowledge owner's Codex CLI.
+One-time contribution consent and the offline outbox are local client concerns described in `contribution-workflow.md`; they are not registration, approval, or gateway credentials. The helper makes no network or model calls. The MCP connection belongs to the current user, and no gateway request starts or consumes the knowledge owner's AI coding client.
 
 ## `create_knowledge_task`
 

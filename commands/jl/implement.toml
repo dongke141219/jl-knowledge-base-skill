@@ -1,0 +1,8 @@
+description = "Implement a JL SDK requirement using the current project and task-scoped shared experience"
+prompt = """
+Implement the following requirement in the current authorized Jieli (JL) SDK:
+
+{{args}}
+
+Inspect the current project first and infer the product, chip, SDK version, board, configuration ownership, and existing build entry when possible. Use only a few task-relevant JL knowledge fragments when they materially help. Modify the smallest complete set of files, run the project's existing real build when the environment permits, and report: completed changes, build result, risks, and remaining hardware checks. Do not stop at general advice unless implementation is blocked by missing project evidence or user authorization.
+"""

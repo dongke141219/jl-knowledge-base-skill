@@ -1,0 +1,8 @@
+description = "Diagnose and fix a concrete JL SDK problem"
+prompt = """
+Diagnose the following problem in the current authorized Jieli (JL) SDK:
+
+{{args}}
+
+Inspect the current project and available documents or logs, infer the chip and SDK scope when possible, and query only task-relevant JL knowledge. Find the most likely cause from project evidence, implement a focused fix when authorized, run the existing real build when possible, and report what was confirmed, what changed, the build result, and the exact hardware checks still required. If the project and request do not reveal enough scope, ask one short plain-language clarification instead of issuing a broad knowledge query.
+"""
