@@ -8,6 +8,6 @@ dependencies:
       value: "jl_private_knowledge"
       description: "Private JL knowledge gateway with server-created tasks, scoped query, and automatic unverified-incubator contribution"
       transport: "streamable_http"
-      url: "https://feels-pieces-functionality-peter.trycloudflare.com/knowledge/mcp"
+      url: "https://convicted-matthew-plates-scientific.trycloudflare.com/knowledge/mcp"
 policy:
   allow_implicit_invocation: true

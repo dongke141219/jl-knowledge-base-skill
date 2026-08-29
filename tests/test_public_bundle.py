@@ -20,7 +20,7 @@ ENGINEER_OPENAI_YAML = ROOT / "skills" / "jl-sdk-engineer-core" / "agents" / "op
 CONTRIBUTION_WORKFLOW = SKILL.parent / "references" / "contribution-workflow.md"
 GATEWAY_CONTRACT = SKILL.parent / "references" / "gateway-contract.md"
 OUTBOX = ROOT / "scripts" / "knowledge_outbox.py"
-PUBLIC_MCP_URL = "https://feels-pieces-functionality-peter.trycloudflare.com/knowledge/mcp"
+PUBLIC_MCP_URL = "https://convicted-matthew-plates-scientific.trycloudflare.com/knowledge/mcp"
 CONSENT_PHRASE = "I_AGREE_TO_AUTOMATIC_SANITIZED_JL_KNOWLEDGE_CONTRIBUTION"
 REVOCATION_PHRASE = "REVOKE_AND_DELETE_PENDING_CONTRIBUTIONS"
 SANITIZATION_ACK = "STRUCTURED_ONLY_NO_SOURCE_LOG_IDENTITY_PATH_KEY_OR_CREDENTIAL"
@@ -42,7 +42,9 @@ class PublicBundleTests(unittest.TestCase):
     def test_manifest_is_distribution_ready(self) -> None:
         payload = json.loads(MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(payload["name"], ROOT.name)
-        self.assertRegex(payload["version"], r"^\d+\.\d+\.\d+$")
+        self.assertRegex(
+            payload["version"], r"^\d+\.\d+\.\d+(?:\+codex\.\d{14})?$"
+        )
         self.assertEqual(payload["skills"], "./skills/")
         self.assertEqual(payload["mcpServers"], "./.mcp.json")
         mcp = json.loads((ROOT / ".mcp.json").read_text(encoding="utf-8"))
@@ -195,10 +197,18 @@ class PublicBundleTests(unittest.TestCase):
             self.assertIn(phrase, readme)
 
         self.assertIn("匿名限流", privacy)
-        self.assertIn("客户网页任务", terms)
+        self.assertIn("不要求注册、登录、申请、批准或个人凭据", terms)
         self.assertIn("Public knowledge access requires no registration", skill)
         self.assertIn("/api/worker/knowledge/*", contract)
         self.assertIn("one operator-controlled master switch", contract)
+        for internal_detail in (
+            "GitHub 版总开关",
+            "内部 worker",
+            "Windows 编译主机",
+            "客户网页任务",
+            "维护者可统一开启",
+        ):
+            self.assertNotIn(internal_detail, readme + privacy + terms)
         for obsolete in (
             "安装 Plugin 不会自动获得知识库访问资格",
             "独立安装凭据",
