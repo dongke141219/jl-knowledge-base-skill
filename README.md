@@ -1,6 +1,6 @@
-# JL Knowledge Base Skill — Codex & Gemini CLI
+# JL Knowledge Base Skill — Codex、Gemini CLI 与 ZCode
 
-面向杰理（JL）SDK 开发者的 Codex Plugin 与 Gemini CLI Extension：把需求、原理图、UI 说明和现有 SDK 一起交给 AI 编程客户端，让它结合当前工程与共享开发经验，尽量直接完成代码修改、问题排查、编译验证和交付说明。
+面向杰理（JL）SDK 开发者的 AI 编程插件，支持 Codex、Gemini CLI 和 ZCode（GLM）：把需求、原理图、UI 说明和现有 SDK 一起交给客户端，让它结合当前工程与共享开发经验，尽量直接完成代码修改、问题排查、编译验证和交付说明。
 
 它不只是回答“这个功能在哪里”，更希望帮助你把一句客户需求真正落到工程里：先读当前项目并自动识别芯片和 SDK 范围，再定位实现点，修改必要代码，调用项目已有的构建方式验证，并明确告诉你哪些已经完成、哪些还需要上板或实机确认。
 
@@ -8,7 +8,7 @@
 
 - **更快找到正确入口**：面对体量很大的 JL SDK，可结合芯片、SDK 版本、板级配置和相似问题经验，缩短反复搜索与试错时间。
 - **从需求走到实际修改**：不仅给建议，还可以在你授权的项目中检查代码、修改文件、执行构建并整理结果。
-- **Codex 与 Gemini CLI 都能用**：两边连接同一套受限共享经验，用户使用自己的客户端账号和模型额度，不需要客户网页账号。
+- **Codex、Gemini CLI 和 ZCode 都能用**：三个客户端连接同一套受限共享经验，用户使用自己的客户端账号和模型额度，不需要客户网页账号。
 - **能读懂配套资料**：可把需求文档、原理图、UI 交互稿、协议说明、报错日志和参考项目一起提供给当前客户端，让它结合资料实现功能。
 - **经验带着可信边界**：共享经验会区分“已处理”“真实编译通过”和“实机验证通过”，避免把未经验证的结论说成最终答案。
 - **遇到相似问题更省时间**：已经解决过的功能、踩过的坑、适用条件和验证结果可以沉淀成可复用经验，下次遇到相似项目时更快进入正确方向。
@@ -28,7 +28,7 @@
 
 ### 2. 上传资料后结合当前工程实现功能
 
-你可以把这些资料提供给 Codex 或 Gemini CLI，也可以放到当前项目目录中：
+你可以把这些资料提供给 Codex、Gemini CLI 或 ZCode，也可以放到当前项目目录中：
 
 - Word、PDF、Markdown、Excel 等需求或功能说明。
 - 原理图 PDF、清晰截图、引脚表、器件说明和板级连接资料。
@@ -89,11 +89,11 @@ JL SDK 中很多问题会重复出现，但不同芯片、SDK 版本、产品形
 
 在用户首次明确同意后，完成过的实质功能和问题点可以被整理成**少量、结构化、脱敏**的经验候选。不会把完整源码、客户资料、原始日志、工程路径、固件、KEY、密码、令牌或私有协议内容直接上传为知识。
 
-这些经验会带着 E1、E2、E3 等证据等级和适用范围保存。以后遇到相似需求时，Codex 或 Gemini CLI 只取回当前任务相关的少量片段，再以当前工程源码、真实编译和实机结果为准进行判断。随着真实完成和验证过的功能增加，可复用的问题点也会越来越丰富，因此后续项目通常能够更快定位、更少试错，而不是每次从零开始。
+这些经验会带着 E1、E2、E3 等证据等级和适用范围保存。以后遇到相似需求时，Codex、Gemini CLI 或 ZCode 只取回当前任务相关的少量片段，再以当前工程源码、真实编译和实机结果为准进行判断。随着真实完成和验证过的功能增加，可复用的问题点也会越来越丰富，因此后续项目通常能够更快定位、更少试错，而不是每次从零开始。
 
 ## 安装与升级
 
-支持 **Codex** 和 **Gemini CLI**。不需要注册客户网页账号，不需要登录、申请、等待批准或领取个人凭据。
+支持 **Codex、Gemini CLI 和 ZCode**。不需要注册客户网页账号，不需要登录、申请、等待批准或领取个人凭据。
 
 ### Codex 全新安装
 
@@ -164,6 +164,38 @@ gemini extensions update jl-knowledge-base-skill
 
 也可以直接说“帮我查下 ANC 为什么没效果”。如果当前打开的是完整 SDK，客户端会先从项目中识别芯片和版本，不要求用户每次手动填写芯片；只有项目和问题都没有足够范围时，才会用大白话追问一次。
 
+### ZCode（GLM）全新安装
+
+1. 打开 ZCode，进入 **设置 → 插件**。
+2. 点击右上角 **创建 → 添加插件市场**。
+3. 填入下面这个 GitHub 仓库地址并确认：
+
+```text
+https://github.com/dongke141219/jl-knowledge-base-skill
+```
+
+4. 在插件页面的 **个人** 分区找到 **JL Knowledge Base Skill**，点击 **安装** 并启用。
+5. 新建一个 ZCode 任务，打开你有权使用的 JL SDK 目录后直接描述需求。
+
+安装后可在 **设置 → MCP** 中看到插件提供的 JL 知识连接。日常使用不必记命令，也不必每次主动填写芯片，例如可以直接说：
+
+```text
+帮我查下这个项目 ANC 为什么没效果，找到原因后直接修复并编译验证。
+```
+
+ZCode 会先查看当前 SDK，尽量从工程中识别芯片和版本。只有当前目录不是完整 SDK、并且问题描述也不足以判断范围时，才会追问一个关键问题。
+
+也可以使用两个快捷命令：
+
+```text
+/jl-implement 把三击功能改为循环切换 ANC、通透和关闭
+/jl-diagnose 左右耳状态不同步，帮我找到原因并修复
+```
+
+### ZCode 旧版本升级
+
+打开 **设置 → 插件 → 市场源**，刷新 `jl-knowledge` 市场，然后回到已安装插件执行更新。更新完成后新建一个任务再测试，旧任务可能仍保留启动时加载的旧 Skill 和连接配置。
+
 ## 推荐提问方式
 
 为了更快得到可交付结果，建议一次说清楚：
@@ -183,7 +215,7 @@ gemini extensions update jl-knowledge-base-skill
 最后按“已修改、编译结果、风险、实机验证步骤”四部分告诉我结果。
 ```
 
-Gemini CLI 可以直接说：
+Gemini CLI 和 ZCode 可以直接说：
 
 ```text
 请结合 JL 知识库完成这个需求，不要只分析。
@@ -194,7 +226,7 @@ Gemini CLI 可以直接说：
 
 ## 免费与隐私
 
-JL 知识服务免费提供；使用者自己的 Codex 或 Gemini 账号、订阅和模型用量由使用者承担。
+JL 知识服务免费提供；使用者自己的 Codex、Gemini 或 ZCode/GLM 账号、订阅和模型用量由使用者承担。
 
 第一次需要贡献新经验时，当前客户端会先说明脱敏范围并征求一次同意。不同意不会上传本地内容，也不影响继续使用当前 SDK 完成任务。源码、客户资料、完整日志、路径、固件、KEY、密码、令牌和私有协议内容不会作为知识贡献上传。
 
@@ -204,14 +236,14 @@ JL 知识服务免费提供；使用者自己的 Codex 或 Gemini 账号、订�
 
 ---
 
-# JL Knowledge Base Skill — Codex & Gemini CLI
+# JL Knowledge Base Skill — Codex, Gemini CLI & ZCode
 
-A Codex Plugin and Gemini CLI Extension for Jieli (JL) SDK engineering. Give either client an authorized SDK together with requirements, schematics, UI specifications, protocol documents, logs, or a reference project, and ask it to locate the implementation, modify the current project, run its existing build, and report the remaining hardware checks.
+An AI coding plugin for Jieli (JL) SDK engineering in Codex, Gemini CLI, and ZCode. Give the client an authorized SDK together with requirements, schematics, UI specifications, protocol documents, logs, or a reference project, and ask it to locate the implementation, modify the current project, run its existing build, and report the remaining hardware checks.
 
 ## Highlights
 
 - Move from a customer requirement to concrete SDK changes instead of receiving only general advice.
-- Use the same task-scoped shared JL experience from Codex or Gemini CLI with no customer-platform account.
+- Use the same task-scoped shared JL experience from Codex, Gemini CLI, or ZCode with no customer-platform account.
 - Use schematics, UI flows, protocol tables, error logs, and reference projects as task context.
 - Work across keys, LEDs, ANC, microphones, audio, power and charging, Bluetooth/TWS, APP integration, UI, and build configuration.
 - Reuse a few task-relevant, evidence-labelled JL engineering lessons while still treating the current source, real build, and hardware result as authoritative.
@@ -270,6 +302,23 @@ Update later from a normal terminal:
 gemini extensions update jl-knowledge-base-skill
 ```
 
+## ZCode install and update
+
+Open **Settings → Plugins → Create → Add plugin marketplace**, then enter:
+
+```text
+https://github.com/dongke141219/jl-knowledge-base-skill
+```
+
+Find **JL Knowledge Base Skill** under **Personal**, install and enable it, then start a new task in an authorized JL SDK. Ask naturally or use:
+
+```text
+/jl-implement <requirement>
+/jl-diagnose <problem>
+```
+
+To update, refresh the `jl-knowledge` source under **Settings → Plugins → Marketplace Sources**, update the installed plugin, and start a new task.
+
 ## Example
 
 ```text
@@ -279,7 +328,7 @@ modify the necessary files, run the project's existing Makefile, and report the 
 build result, risks, and remaining hardware checks.
 ```
 
-In Gemini CLI, the same request can be written without the dollar-prefixed skill name:
+In Gemini CLI or ZCode, the same request can be written without the dollar-prefixed skill name:
 
 ```text
 Use the JL knowledge extension to implement this requirement in the current SDK.

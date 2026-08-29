@@ -1,0 +1,19 @@
+{
+  "name": "jl-knowledge",
+  "description": "JL SDK engineering plugin for Codex, Gemini CLI, and ZCode.",
+  "plugins": [
+    {
+      "name": "jl-knowledge-base-skill",
+      "source": ".",
+      "description": "Implement and diagnose JL SDK features with task-scoped shared engineering experience.",
+      "version": "0.5.0",
+      "category": "development",
+      "tags": [
+        "jieli",
+        "firmware",
+        "sdk"
+      ],
+      "strict": true
+    }
+  ]
+}

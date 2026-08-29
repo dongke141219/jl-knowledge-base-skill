@@ -15,6 +15,10 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / ".codex-plugin" / "plugin.json"
 GEMINI_MANIFEST = ROOT / "gemini-extension.json"
 GEMINI_CONTEXT = ROOT / "GEMINI.md"
+ZCODE_MANIFEST = ROOT / ".zcode-plugin" / "plugin.json"
+ZCODE_MARKETPLACE = ROOT / "marketplace.json"
+ZCODE_IMPLEMENT_COMMAND = ROOT / "commands" / "jl-implement.md"
+ZCODE_DIAGNOSE_COMMAND = ROOT / "commands" / "jl-diagnose.md"
 SKILL = ROOT / "skills" / "jl-knowledge-base-skill" / "SKILL.md"
 OPENAI_YAML = ROOT / "skills" / "jl-knowledge-base-skill" / "agents" / "openai.yaml"
 ENGINEER_SKILL = ROOT / "skills" / "jl-sdk-engineer-core" / "SKILL.md"
@@ -85,6 +89,35 @@ class PublicBundleTests(unittest.TestCase):
 
         self.assertTrue((ROOT / "commands" / "jl" / "implement.toml").is_file())
         self.assertTrue((ROOT / "commands" / "jl" / "diagnose.toml").is_file())
+
+    def test_zcode_plugin_and_marketplace_are_distribution_ready(self) -> None:
+        payload = json.loads(ZCODE_MANIFEST.read_text(encoding="utf-8"))
+        self.assertEqual(payload["name"], "jl-knowledge-base-skill")
+        self.assertRegex(payload["version"], r"^\d+\.\d+\.\d+$")
+        self.assertEqual(
+            payload["commands"],
+            ["commands/jl-implement.md", "commands/jl-diagnose.md"],
+        )
+        self.assertEqual(payload["skills"], "skills")
+        self.assertEqual(payload["mcpServers"], ".mcp.json")
+
+        marketplace = json.loads(ZCODE_MARKETPLACE.read_text(encoding="utf-8"))
+        self.assertEqual(marketplace["name"], "jl-knowledge")
+        self.assertEqual(len(marketplace["plugins"]), 1)
+        entry = marketplace["plugins"][0]
+        self.assertEqual(entry["name"], payload["name"])
+        self.assertEqual(entry["version"], payload["version"])
+        self.assertEqual(entry["source"], ".")
+        self.assertTrue(entry["strict"])
+
+        for command_path in (ZCODE_IMPLEMENT_COMMAND, ZCODE_DIAGNOSE_COMMAND):
+            command = command_path.read_text(encoding="utf-8")
+            self.assertIn("description:", command)
+            self.assertIn("argument-hint:", command)
+            self.assertIn("skills: jl-sdk-engineer-core,jl-knowledge-base-skill", command)
+            self.assertIn("$ARGUMENTS", command)
+            self.assertIn("芯片", command)
+            self.assertIn("不要发起空查询、通配查询或知识库遍历", command)
 
     def test_skill_declares_scoped_mcp_dependency(self) -> None:
         yaml_text = OPENAI_YAML.read_text(encoding="utf-8")
@@ -234,6 +267,13 @@ class PublicBundleTests(unittest.TestCase):
             "Gemini CLI 全新安装",
             "gemini extensions install https://github.com/dongke141219/jl-knowledge-base-skill --auto-update",
             "gemini extensions update jl-knowledge-base-skill",
+            "ZCode（GLM）全新安装",
+            "设置 → 插件",
+            "创建 → 添加插件市场",
+            "https://github.com/dongke141219/jl-knowledge-base-skill",
+            "/jl-implement",
+            "/jl-diagnose",
+            "ZCode 旧版本升级",
             "不要求用户每次手动填写芯片",
             "不需要注册客户网页账号，不需要登录、申请、等待批准或领取个人凭据",
             "JL Knowledge Base Skill",

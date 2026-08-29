@@ -16,7 +16,7 @@ Work only in the SDK and supporting files that the current user has lawfully pro
 
 ## Obtain only task-scoped guidance
 
-Use the bundled `jl-knowledge-base-skill` companion when a JL-specific prior implementation would materially help the current decision. In Codex it may be invoked as `$jl-knowledge-base-skill`; Gemini CLI may activate it automatically from the task. Ask one narrow question and use at most the returned task-relevant fragments. Preserve each fragment's evidence level, scope, layer, and limitations. Never browse, enumerate, persist, republish, or try to reconstruct the private corpus.
+Use the bundled `jl-knowledge-base-skill` companion when a JL-specific prior implementation would materially help the current decision. In Codex it may be invoked as `$jl-knowledge-base-skill`; Gemini CLI and ZCode may activate it automatically from the task. Ask one narrow question and use at most the returned task-relevant fragments. Preserve each fragment's evidence level, scope, layer, and limitations. Never browse, enumerate, persist, republish, or try to reconstruct the private corpus.
 
 When classifying new experience, use the canonical product/domain pair defined by the companion skill. Do not create singular spelling variants or ad-hoc domains: one product function must keep growing on one stable chain.
 

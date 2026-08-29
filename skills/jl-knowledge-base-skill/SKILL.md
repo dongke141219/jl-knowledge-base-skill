@@ -5,7 +5,7 @@ description: Query a configured private JL SDK knowledge gateway for a few task-
 
 # JL Knowledge Base Skill
 
-Use the private gateway as supporting evidence for a concrete JL SDK task. The public Codex/Gemini package contains no private knowledge, endpoint credentials, customer data, or writable access to the verified corpus.
+Use the private gateway as supporting evidence for a concrete JL SDK task. The public Codex, Gemini CLI, and ZCode package contains no private knowledge, endpoint credentials, customer data, or writable access to the verified corpus.
 
 ## One-time contribution consent
 
@@ -62,7 +62,7 @@ Read [references/contribution-workflow.md](references/contribution-workflow.md) 
 
 ## Anonymous public and internal-token boundary
 
-The current user's already-running Codex or Gemini CLI session may summarize its own task into a candidate. The outbox helper performs only local JSON validation/storage, and the gateway performs only anonymous rate-limited lookup/deduplication/storage. Neither component starts an AI client, calls a model, has the owner's login, or spends the owner's AI usage. A GitHub or company user therefore uses their own AI account; only workloads deliberately run by the owner's web worker use the owner's configured account.
+The current user's already-running Codex, Gemini CLI, or ZCode session may summarize its own task into a candidate. The outbox helper performs only local JSON validation/storage, and the gateway performs only anonymous rate-limited lookup/deduplication/storage. Neither component starts an AI client, calls a model, has the owner's login, or spends the owner's AI usage. A GitHub or company user therefore uses their own AI account; only workloads deliberately run by the owner's web worker use the owner's configured account.
 
 Public knowledge access requires no registration, login, application, approval, or individual credential. When the operator enables the single GitHub-service switch, every public installation may use the gateway anonymously; when the operator stops it, every public installation must treat the gateway as unavailable and continue with the local engineering shell. Never fall back to an internal worker route, the owner's full global Skill, direct NAS access, or a customer-web-platform account.
 

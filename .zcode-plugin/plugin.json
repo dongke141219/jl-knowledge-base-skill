@@ -1,0 +1,24 @@
+{
+  "name": "jl-knowledge-base-skill",
+  "version": "0.5.0",
+  "description": "Implement and diagnose Jieli SDK features in ZCode with task-scoped shared engineering experience.",
+  "author": {
+    "name": "JL Firmware Platform Team",
+    "url": "https://github.com/dongke141219"
+  },
+  "homepage": "https://github.com/dongke141219/jl-knowledge-base-skill",
+  "repository": "https://github.com/dongke141219/jl-knowledge-base-skill",
+  "license": "MIT",
+  "keywords": [
+    "jieli",
+    "jl-sdk",
+    "firmware",
+    "knowledge"
+  ],
+  "commands": [
+    "commands/jl-implement.md",
+    "commands/jl-diagnose.md"
+  ],
+  "skills": "skills",
+  "mcpServers": ".mcp.json"
+}
