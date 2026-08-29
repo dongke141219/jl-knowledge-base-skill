@@ -135,7 +135,7 @@ codex plugin add jl-knowledge-base-skill@jl-knowledge
 请先安装 Gemini CLI 和 Git，然后在普通终端中运行：
 
 ```text
-gemini extensions install https://github.com/dongke141219/jl-knowledge-base-skill --auto-update
+gemini extensions install https://github.com/dongke141219/jl-knowledge-base-skill --ref main --auto-update
 ```
 
 安装命令需要在普通终端执行，不能在 Gemini CLI 的交互会话内执行。安装完成后退出并重新打开 Gemini CLI，在你有权使用的 JL SDK 目录中开始任务。
@@ -252,7 +252,7 @@ Restart Codex and use a new task so the updated skills and connection are loaded
 ## Gemini CLI install and update
 
 ```text
-gemini extensions install https://github.com/dongke141219/jl-knowledge-base-skill --auto-update
+gemini extensions install https://github.com/dongke141219/jl-knowledge-base-skill --ref main --auto-update
 ```
 
 Restart Gemini CLI, open an authorized JL SDK, and ask naturally. The extension can infer the chip and SDK scope from the current project; it asks one short clarification only when neither the project nor the request provides enough scope.
