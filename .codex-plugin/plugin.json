@@ -1,7 +1,7 @@
 {
   "name": "jl-knowledge-base-skill",
-  "version": "0.3.5+codex.20260829014228",
-  "description": "Free JL SDK engineering help with shared task-relevant knowledge for Codex.",
+  "version": "0.3.6+codex.20260829023237",
+  "description": "Turn JL SDK requirements, schematics, UI documents, and shared experience into verified project changes in Codex.",
   "author": {
     "name": "JL Firmware Platform Team",
     "url": "https://github.com/dongke141219"
@@ -13,8 +13,8 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "JL Knowledge Base Skill",
-    "shortDescription": "Use shared JL SDK experience in Codex.",
-    "longDescription": "Helps Codex locate JL SDK implementation points, solve project issues, apply relevant shared experience, and verify changes with the project's own build entry.",
+    "shortDescription": "Implement JL SDK features with shared experience.",
+    "longDescription": "Give Codex an authorized JL SDK together with requirements, schematics, UI specifications, protocols, or logs. It helps locate implementation points, modify the project, diagnose issues, run the existing build, and report remaining hardware checks with task-relevant shared experience.",
     "developerName": "JL Firmware Platform Team",
     "category": "Developer Tools",
     "websiteURL": "https://github.com/dongke141219/jl-knowledge-base-skill",

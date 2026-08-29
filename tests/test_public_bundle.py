@@ -190,6 +190,13 @@ class PublicBundleTests(unittest.TestCase):
         for phrase in (
             "可以做什么",
             "安装",
+            "旧版本升级到最新版",
+            "codex plugin marketplace upgrade jl-knowledge",
+            "codex plugin add jl-knowledge-base-skill@jl-knowledge",
+            "原理图",
+            "UI 交互文档",
+            "为什么会越用越智能",
+            "可能减少 Token 消耗",
             "不需要注册客户网页账号，不需要登录、申请、等待批准或领取个人凭据",
             "JL Knowledge Base Skill",
             "No customer-platform registration, login, application, approval, or individual credential is required",
