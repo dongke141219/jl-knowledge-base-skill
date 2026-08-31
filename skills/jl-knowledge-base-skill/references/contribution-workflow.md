@@ -1,29 +1,29 @@
 # Automatic contribution workflow
 
-The outbox helper is at `scripts/knowledge_outbox.py` in the public bundle. It requires Python 3.10 or newer and uses only the standard library. It never connects to a network, invokes Codex or Gemini CLI, reads a project tree, or discovers files. The caller supplies one already-sanitized candidate JSON object.
+The outbox helper is at `scripts/knowledge_outbox.py` in the public bundle. It requires Python 3.10 or newer and uses only the standard library. In the commands below, `<python>` means the first available `python`, `python3`, or `py -3` command that actually reports Python 3.10+. If no suitable interpreter or helper is available, shared knowledge remains disabled and the client continues local-only SDK work; it must not bypass or invent a consent receipt. The helper never connects to a network, invokes Codex or Gemini CLI, reads a project tree, or discovers files. The caller supplies one already-sanitized candidate JSON object.
 
 The helper stores state in the current operating-system user's application-state directory. `JL_KNOWLEDGE_CLIENT_HOME` may override that location for a managed installation or tests. The directory contains only the current consent receipt, counters, and unsent sanitized candidate envelopes. It contains no endpoint, token, `task_id`, customer identity, source, raw log, KEY, or returned private fragment. Successfully submitted entries are deleted; unsent entries expire after 30 days.
 
-## First connection
+## First shared-knowledge access
 
 Run:
 
 ```text
-python <bundle-root>/scripts/knowledge_outbox.py status
+<python> <bundle-root>/scripts/knowledge_outbox.py status
 ```
 
-If `consent_granted` is false, present the one-time disclosure in `SKILL.md`. After an explicit yes or an equivalent managed-company authorization, record it with:
+If `consent_granted` is false, present the prominent one-time disclosure in `SKILL.md` and stop all shared-knowledge calls. Only after the user personally replies with the exact phrase `同意`, record it with:
 
 ```text
-python <bundle-root>/scripts/knowledge_outbox.py grant --accept I_AGREE_TO_AUTOMATIC_SANITIZED_JL_KNOWLEDGE_CONTRIBUTION
+<python> <bundle-root>/scripts/knowledge_outbox.py grant --accept 同意
 ```
 
-Do not run `grant` merely because the plugin was installed or invoked. A current grant makes later substantive-task contributions automatic without another prompt.
+Do not translate, auto-fill, infer, or run `grant` merely because the plugin was installed or invoked. Before a current grant exists, do not create, query, or submit a shared-knowledge task. A current grant makes later substantive-task contributions automatic without another prompt.
 
 To withdraw and delete all unsent candidates:
 
 ```text
-python <bundle-root>/scripts/knowledge_outbox.py revoke --confirm REVOKE_AND_DELETE_PENDING_CONTRIBUTIONS
+<python> <bundle-root>/scripts/knowledge_outbox.py revoke --confirm REVOKE_AND_DELETE_PENDING_CONTRIBUTIONS
 ```
 
 ## Enqueue before upload
@@ -31,7 +31,7 @@ python <bundle-root>/scripts/knowledge_outbox.py revoke --confirm REVOKE_AND_DEL
 Write a candidate containing exactly the gateway candidate fields to a private scratch JSON file, or pass it on standard input. Do not use a command-line JSON argument because process listings and shell history can retain it. Enqueue with:
 
 ```text
-python <bundle-root>/scripts/knowledge_outbox.py enqueue --candidate-file <scratch-json> --sanitization-ack STRUCTURED_ONLY_NO_SOURCE_LOG_IDENTITY_PATH_KEY_OR_CREDENTIAL
+<python> <bundle-root>/scripts/knowledge_outbox.py enqueue --candidate-file <scratch-json> --sanitization-ack STRUCTURED_ONLY_NO_SOURCE_LOG_IDENTITY_PATH_KEY_OR_CREDENTIAL
 ```
 
 Delete the scratch file immediately after the helper responds. The helper applies the same checks to scalar text, scope lists, workflow/validation/limitation lists, and relation values. It rejects unknown fields, oversized text, multiline/code/log-shaped text, common identity labels, email addresses, IPv4/IPv6 addresses, MAC addresses, hostnames, public or private URLs, local/remote paths, credential assignments, private-key material, invalid lifecycle/evidence pairs, and malformed feature relations. This is a conservative final check, not permission to feed it raw source or logs. The caller must derive and sanitize the structured candidate before invoking it.
@@ -43,44 +43,44 @@ The returned 64-character `id` is the SHA-256 of canonical candidate JSON, inclu
 At the start and end of a substantive task, request at most three due entries:
 
 ```text
-python <bundle-root>/scripts/knowledge_outbox.py ready --limit 3
+<python> <bundle-root>/scripts/knowledge_outbox.py ready --limit 3
 ```
 
 For each entry:
 
 1. Obtain a narrow server-issued task if the current JL task has no suitable live `task_id`. Do not save a task ID in the outbox.
 2. Call `submit_knowledge_candidate` with `task_id`, `candidate`, and `idempotency_key` equal to the outbox entry `id`.
-3. Only after `status: accepted_to_incubator`, remove it:
+3. Only after `status: queued_for_review`, remove it:
 
 ```text
-python <bundle-root>/scripts/knowledge_outbox.py ack --id <entry-id>
+<python> <bundle-root>/scripts/knowledge_outbox.py ack --id <entry-id>
 ```
 
 4. For an unavailable service, timeout, authentication interruption, or rate limit, retain it with a bounded exponential delay:
 
 ```text
-python <bundle-root>/scripts/knowledge_outbox.py retry --id <entry-id> --reason unavailable
+<python> <bundle-root>/scripts/knowledge_outbox.py retry --id <entry-id> --reason unavailable
 ```
 
 Allowed transient reasons are `unavailable`, `rate_limited`, `authentication`, `timeout`, and `other`. Do not store raw server errors. A privacy, schema, or scope rejection is not transient; delete the candidate and, if still useful, derive a fresh sanitized one:
 
 ```text
-python <bundle-root>/scripts/knowledge_outbox.py drop --id <entry-id> --reason privacy_rejected
+<python> <bundle-root>/scripts/knowledge_outbox.py drop --id <entry-id> --reason privacy_rejected
 ```
 
 If an identical hash was previously withdrawn by the service, the idempotent response is `status: withdrawn`. Stop retrying that exact knowledge and remove it locally:
 
 ```text
-python <bundle-root>/scripts/knowledge_outbox.py drop --id <entry-id> --reason server_withdrawn
+<python> <bundle-root>/scripts/knowledge_outbox.py drop --id <entry-id> --reason server_withdrawn
 ```
 
 Only a genuinely corrected implementation or evidence record should be submitted again; its normalized content will produce a different SHA-256 key.
 
-Synchronization is best effort. Do not delay the main JL result indefinitely, mark it failed, or run the owner's AI coding client because the gateway is offline.
+Synchronization is best effort. Do not delay the main JL result indefinitely, mark it failed, or run the owner's AI coding client because the gateway is offline. A stored candidate is not public knowledge: it remains unavailable to queries until internal review accepts it into the formal shared knowledge base.
 
 ## Candidate shape
 
-Use the exact `candidate` object from `gateway-contract.md`. `product_id` and `domain_id` are mandatory server-controlled lowercase semantic IDs such as `product.tws-earbuds` and `domain.app-integration`. Use only a product/domain pair listed in `SKILL.md`; do not invent a spelling variant or new classification locally. They must describe a reusable product form and function domain, never a customer, company, project, account, repository, or directory. Relations, when present, are short objects with only:
+Use the exact `candidate` object from `gateway-contract.md`. Set `candidate_kind` to `solution` for a concrete reusable finding, or `knowledge_gap` only when a narrow query missed and the completed task still has no reliable answer. A gap records the missing scope for administrators; it is never a solution and can never be served or merged as formal knowledge. `product_id` and `domain_id` are mandatory server-controlled lowercase semantic IDs such as `product.tws-earbuds` and `domain.app-integration`. Use only a product/domain pair listed in `SKILL.md`; do not invent a spelling variant or new classification locally. They must describe a reusable product form and function domain, never a customer, company, project, account, repository, or directory. Relations, when present, contain only `type` and `target_semantic_id`; the allowed types are `contains`, `depends_on`, `extends`, `alternative`, and `supersedes`. Example:
 
 ```json
 {"type":"depends_on","target_semantic_id":"audio.anc"}

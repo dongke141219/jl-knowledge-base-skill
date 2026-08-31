@@ -24,8 +24,8 @@ from typing import Any, Iterator
 
 
 SCHEMA_VERSION = 1
-DISCLOSURE_VERSION = "2026-08-28-v1"
-CONSENT_PHRASE = "I_AGREE_TO_AUTOMATIC_SANITIZED_JL_KNOWLEDGE_CONTRIBUTION"
+DISCLOSURE_VERSION = "2026-08-31-v2"
+CONSENT_PHRASE = "同意"
 REVOCATION_PHRASE = "REVOKE_AND_DELETE_PENDING_CONTRIBUTIONS"
 SANITIZATION_ACK = "STRUCTURED_ONLY_NO_SOURCE_LOG_IDENTITY_PATH_KEY_OR_CREDENTIAL"
 MAX_CANDIDATE_BYTES = 12 * 1024
@@ -47,6 +47,7 @@ ALLOWED_LIFECYCLE_EVIDENCE = {
     "verified_pass": {"E3", "E4"},
 }
 ALLOWED_CANDIDATE_FIELDS = {
+    "candidate_kind",
     "product_id",
     "domain_id",
     "capability_id",
@@ -64,6 +65,8 @@ ALLOWED_CANDIDATE_FIELDS = {
     "limitations",
 }
 REQUIRED_CANDIDATE_FIELDS = ALLOWED_CANDIDATE_FIELDS - {"parent_semantic_id"}
+ALLOWED_CANDIDATE_KINDS = {"solution", "knowledge_gap"}
+ALLOWED_RELATION_TYPES = {"contains", "depends_on", "extends", "alternative", "supersedes"}
 SCOPE_FIELDS = {"products", "chips", "sdk_versions", "platforms", "tags"}
 TRANSIENT_REASONS = {"unavailable", "rate_limited", "authentication", "timeout", "other"}
 DROP_REASONS = {
@@ -71,7 +74,7 @@ DROP_REASONS = {
     "server_withdrawn", "obsolete",
 }
 
-IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{1,159}$")
+IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{1,119}$")
 CLASSIFICATION_ID_RE = re.compile(r"^(?:product|domain)\.[a-z0-9]+(?:[.-][a-z0-9]+)*$")
 CANONICAL_PRODUCT_DOMAINS = {
     "product.tws-earbuds": {
@@ -299,7 +302,7 @@ def _has_current_consent(root: Path) -> bool:
 
 def _require_consent(root: Path) -> None:
     if not _has_current_consent(root):
-        raise OutboxError("One-time automatic contribution consent has not been granted.")
+        raise OutboxError("Consent required: shared-knowledge access needs the user's one-time 同意 agreement.")
 
 
 def _validate_text(value: Any, field: str, max_length: int, *, allow_empty: bool = False) -> str:
@@ -346,7 +349,7 @@ def _validate_text(value: Any, field: str, max_length: int, *, allow_empty: bool
 
 
 def _validate_identifier(value: Any, field: str) -> str:
-    cleaned = _validate_text(value, field, 160)
+    cleaned = _validate_text(value, field, 120)
     if not IDENTIFIER_RE.fullmatch(cleaned):
         raise OutboxError(f"{field} must be a stable non-identifying semantic identifier.")
     return cleaned
@@ -372,9 +375,14 @@ def _validate_relations(value: Any) -> list[dict[str, str]]:
     for index, relation in enumerate(value):
         if not isinstance(relation, dict) or set(relation) != {"type", "target_semantic_id"}:
             raise OutboxError(f"relations[{index}] must contain only type and target_semantic_id.")
+        relation_type = _validate_identifier(relation["type"], f"relations[{index}].type")
+        if relation_type not in ALLOWED_RELATION_TYPES:
+            raise OutboxError(
+                f"relations[{index}].type must be contains, depends_on, extends, alternative, or supersedes."
+            )
         result.append(
             {
-                "type": _validate_identifier(relation["type"], f"relations[{index}].type"),
+                "type": relation_type,
                 "target_semantic_id": _validate_identifier(
                     relation["target_semantic_id"], f"relations[{index}].target_semantic_id"
                 ),
@@ -393,11 +401,20 @@ def validate_candidate(candidate: Any) -> dict[str, Any]:
     if missing:
         raise OutboxError(f"Candidate is missing fields: {', '.join(sorted(missing))}.")
 
+    candidate_kind = _validate_text(candidate["candidate_kind"], "candidate_kind", 32)
+    if candidate_kind not in ALLOWED_CANDIDATE_KINDS:
+        raise OutboxError("candidate_kind must be solution or knowledge_gap.")
     node_type = _validate_text(candidate["node_type"], "node_type", 32)
     if node_type not in ALLOWED_NODE_TYPES:
         raise OutboxError("node_type is not allowed.")
     lifecycle = _validate_text(candidate["lifecycle_status"], "lifecycle_status", 48)
     evidence = _validate_text(candidate["evidence_level"], "evidence_level", 2)
+    if candidate_kind == "knowledge_gap" and (
+        node_type != "issue" or lifecycle != "processed_pending_verification" or evidence != "E1"
+    ):
+        raise OutboxError(
+            "A knowledge_gap must be an E1 processed_pending_verification issue, not a solution claim."
+        )
     if lifecycle not in ALLOWED_LIFECYCLE_EVIDENCE or evidence not in ALLOWED_LIFECYCLE_EVIDENCE[lifecycle]:
         raise OutboxError("Lifecycle and evidence level do not match actual-evidence rules.")
 
@@ -425,6 +442,7 @@ def validate_candidate(candidate: Any) -> dict[str, Any]:
         raise OutboxError("domain_id is not valid for product_id in the server-controlled taxonomy.")
 
     normalized: dict[str, Any] = {
+        "candidate_kind": candidate_kind,
         "product_id": product_id,
         "domain_id": domain_id,
         "capability_id": _validate_identifier(candidate["capability_id"], "capability_id"),
@@ -467,7 +485,13 @@ def _load_entry(path: Path) -> dict[str, Any]:
         raise OutboxError("Local outbox entry identity does not match its file name.")
     if payload.get("idempotency_key") != payload.get("id"):
         raise OutboxError("Local outbox idempotency key is invalid.")
-    payload["candidate"] = validate_candidate(payload.get("candidate"))
+    stored_candidate = payload.get("candidate")
+    if isinstance(stored_candidate, dict) and "candidate_kind" not in stored_candidate:
+        # v0.5.x outbox entries predate explicit solution/gap classification.
+        # Preserve those already-consented local items as solutions, while new
+        # enqueue requests must always state candidate_kind explicitly.
+        stored_candidate = {**stored_candidate, "candidate_kind": "solution"}
+    payload["candidate"] = validate_candidate(stored_candidate)
     _parse_utc(payload.get("queued_at"))
     _parse_utc(payload.get("next_attempt_at"))
     return payload
@@ -527,6 +551,7 @@ def command_status(root: Path, _args: argparse.Namespace) -> dict[str, Any]:
             "disclosure_version": DISCLOSURE_VERSION,
             "consent_granted": _has_current_consent(root),
             "consent_needs_refresh": bool(consent) and not _has_current_consent(root),
+            "shared_knowledge_access_enabled": _has_current_consent(root),
             "automatic_mode": "outbox_first_best_effort_mcp_submit",
             "pending_count": len(paths),
             "ready_count": ready,
@@ -537,7 +562,7 @@ def command_status(root: Path, _args: argparse.Namespace) -> dict[str, Any]:
 
 def command_grant(root: Path, args: argparse.Namespace) -> dict[str, Any]:
     if args.accept != CONSENT_PHRASE:
-        raise OutboxError("The exact one-time consent phrase is required.")
+        raise OutboxError("The user must enter the exact one-time agreement phrase: 同意")
     with _state_lock(root):
         previous = _load_consent(root) or {}
         payload = {
@@ -545,13 +570,14 @@ def command_grant(root: Path, args: argparse.Namespace) -> dict[str, Any]:
             "disclosure_version": DISCLOSURE_VERSION,
             "granted": True,
             "granted_at": _utc_text(),
-            "mode": "automatic_sanitized_structured_candidates",
+            "mode": "shared_access_and_automatic_sanitized_candidates",
             "stats": previous.get("stats", {}),
         }
         _atomic_write_json(_consent_path(root), payload)
     return {
         "consent_granted": True,
         "disclosure_version": DISCLOSURE_VERSION,
+        "shared_knowledge_access_enabled": True,
         "per_task_confirmation_required": False,
     }
 
@@ -565,7 +591,11 @@ def command_revoke(root: Path, args: argparse.Namespace) -> dict[str, Any]:
             path.unlink()
         with contextlib.suppress(FileNotFoundError):
             _consent_path(root).unlink()
-    return {"consent_granted": False, "pending_deleted": len(pending)}
+    return {
+        "consent_granted": False,
+        "shared_knowledge_access_enabled": False,
+        "pending_deleted": len(pending),
+    }
 
 
 def command_enqueue(root: Path, args: argparse.Namespace) -> dict[str, Any]:

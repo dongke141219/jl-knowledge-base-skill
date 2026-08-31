@@ -1,5 +1,23 @@
 # JL Knowledge Base Skill — Codex、Gemini CLI 与 ZCode
 
+> ## ⚠️ 使用前请先同意「知识共同成长计划」
+>
+> JL Knowledge Base Skill 是大家共同使用、共同完善的共享知识服务。
+>
+> 您在使用知识库解决 JL SDK 问题的同时，如果任务中形成了可复用的解决方法，系统会自动提取一份**脱敏的知识候选**上传。大家贡献的经验越多，知识库就越完整，今后遇到相同问题时就能更快找到答案、减少重复排查，也可能节省 AI Token。
+>
+> 系统不会上传或公开您的完整 SDK、完整源码、原理图、UI 文档、固件、原始日志、工程路径、客户身份、密码或密钥。只会整理与问题有关的结构化经验，例如：适用芯片和 SDK、问题现象、原因、解决方法以及验证情况。新内容会先进入候选知识库，审核通过后才会提供给其他用户。
+>
+> **使用共享知识库，就代表需要共同贡献可复用经验。只有大家一起贡献，大家才能共同拥有更全面、更准确、更好用的 JL 知识库。**
+>
+> 首次使用时，请在对话输入框中输入：**同意**
+>
+> **未输入“同意”，将无法访问 JL 共享知识库。**您仍可继续使用自己的 AI 客户端处理本地 SDK，但不会取得共享知识片段。
+>
+> **旧版 Skill 的共享知识访问已经暂停。**如果使用时看到升级提示，请直接前往 [GitHub](https://github.com/dongke141219/jl-knowledge-base-skill) 或 [Gitee](https://gitee.com/fofo123/jl-knowledge-base-skill) 获取最新版，重新启动客户端并新建任务后使用；本地 SDK 检查、修改和编译不受影响。
+>
+> 目前已适配 **Codex、Gemini CLI 和 ZCode**。若您希望在其他 AI 编程客户端中使用本 Skill，请通过 [GitHub Issues](https://github.com/dongke141219/jl-knowledge-base-skill/issues) 或 [Gitee Issues](https://gitee.com/fofo123/jl-knowledge-base-skill/issues) 联系作者，由作者完成兼容适配后再使用。
+
 面向杰理（JL）SDK 开发者的 AI 编程插件，支持 Codex、Gemini CLI 和 ZCode（GLM）：把需求、原理图、UI 说明和现有 SDK 一起交给客户端，让它结合当前工程与共享开发经验，尽量直接完成代码修改、问题排查、编译验证和交付说明。
 
 它不只是回答“这个功能在哪里”，更希望帮助你把一句客户需求真正落到工程里：先读当前项目并自动识别芯片和 SDK 范围，再定位实现点，修改必要代码，调用项目已有的构建方式验证，并明确告诉你哪些已经完成、哪些还需要上板或实机确认。
@@ -87,13 +105,17 @@ JL SDK 中很多问题会重复出现，但不同芯片、SDK 版本、产品形
 - 当时真正做了哪些处理，是否通过真实编译或实机验证。
 - 哪些方案失败过、失败边界是什么，避免下次重复走弯路。
 
-在用户首次明确同意后，完成过的实质功能和问题点可以被整理成**少量、结构化、脱敏**的经验候选。不会把完整源码、客户资料、原始日志、工程路径、固件、KEY、密码、令牌或私有协议内容直接上传为知识。
+在用户首次明确输入“同意”后，完成过的实质功能和问题点会被整理成**少量、结构化、脱敏**的经验候选。没有可靠解决结论时，只记录“知识缺口”，不会编造答案。不会把完整源码、客户资料、原始日志、工程路径、固件、KEY、密码、令牌或私有协议内容直接上传为知识。
 
-这些经验会带着 E1、E2、E3 等证据等级和适用范围保存。以后遇到相似需求时，Codex、Gemini CLI 或 ZCode 只取回当前任务相关的少量片段，再以当前工程源码、真实编译和实机结果为准进行判断。随着真实完成和验证过的功能增加，可复用的问题点也会越来越丰富，因此后续项目通常能够更快定位、更少试错，而不是每次从零开始。
+这些新经验会先进入**候选知识库**，不会马上作为答案提供给其他用户。通过内部审核后才会合并到**正式共享知识库**。以后遇到相似需求时，Codex、Gemini CLI 或 ZCode 只取回当前任务相关的少量正式片段，再以当前工程源码、真实编译和实机结果为准进行判断。随着真实完成和验证过的功能增加，可复用的问题点也会越来越丰富，因此后续项目通常能够更快定位、更少试错，而不是每次从零开始。
 
 ## 安装与升级
 
 支持 **Codex、Gemini CLI 和 ZCode**。不需要注册客户网页账号，不需要登录、申请、等待批准或领取个人凭据。
+
+安装完成后的第一次知识任务会显示“知识共同成长计划”。请阅读说明，并由用户本人在对话输入框中输入 **同意**。客户端不得根据安装动作、历史消息或默认设置替用户同意；未输入“同意”时，服务器不会创建知识任务，也不会返回共享知识片段。
+
+三种客户端共用的首次同意记录和脱敏候选队列需要本机已安装 **Python 3.10 或更高版本**，只使用 Python 标准库，不会额外安装依赖。Windows、macOS 或 Linux 上可用的命令可能是 `python`、`python3` 或 `py -3`，客户端会选取实际指向 Python 3.10+ 的一个。没有 Python 时仍可用自己的 AI 客户端处理本地 SDK，但共享知识访问和自动贡献不会启用；安装 Python 后请新建一个任务再输入“同意”。
 
 ### Codex 全新安装
 
@@ -228,7 +250,7 @@ Gemini CLI 和 ZCode 可以直接说：
 
 JL 知识服务免费提供；使用者自己的 Codex、Gemini 或 ZCode/GLM 账号、订阅和模型用量由使用者承担。
 
-第一次需要贡献新经验时，当前客户端会先说明脱敏范围并征求一次同意。不同意不会上传本地内容，也不影响继续使用当前 SDK 完成任务。源码、客户资料、完整日志、路径、固件、KEY、密码、令牌和私有协议内容不会作为知识贡献上传。
+第一次访问共享知识库时，当前客户端会先醒目说明共同贡献和脱敏范围，并要求用户本人输入“同意”。同意一次后，后续实质任务形成的脱敏知识候选会自动进入候选知识库，不再逐条打断确认；候选经过审核后才可能进入正式共享知识库。不同意不会上传本地内容，也不能访问共享知识库，但不影响用户用自己的客户端继续处理本地 SDK。源码、客户资料、完整日志、路径、固件、KEY、密码、令牌和私有协议内容不会作为知识贡献上传。
 
 请只处理你有权使用的 SDK、文档和项目。知识经验用于辅助定位和决策，当前项目源码、真实编译以及实机测试结果始终具有更高优先级。
 
@@ -237,6 +259,18 @@ JL 知识服务免费提供；使用者自己的 Codex、Gemini 或 ZCode/GLM �
 ---
 
 # JL Knowledge Base Skill — Codex, Gemini CLI & ZCode
+
+> ## ⚠️ Agreement required before shared-knowledge access
+>
+> This is a community-growing knowledge service: users receive task-scoped JL experience and, after substantive work, automatically contribute only a small sanitized knowledge candidate. More verified contributions make future work faster and the shared coverage broader.
+>
+> Complete SDKs, source, schematics, UI documents, firmware, raw logs, project paths, customer identity, passwords, keys, credentials, and private payloads are not uploaded. New candidates stay in a review queue and are not served to other users until approved.
+>
+> On first use, the user must type the exact Chinese phrase **同意** in the conversation. Without it, the shared knowledge service cannot be accessed. Local SDK work in the user's own AI client remains available.
+>
+> **Shared-knowledge access from older Skill versions has been paused.** If an upgrade notice appears, download the latest version directly from [GitHub](https://github.com/dongke141219/jl-knowledge-base-skill) or [Gitee](https://gitee.com/fofo123/jl-knowledge-base-skill), restart the client, and begin a new task. Local SDK inspection, editing, and building remain available.
+>
+> Codex, Gemini CLI, and ZCode are currently supported. To use this Skill in another AI coding client, contact the author through [GitHub Issues](https://github.com/dongke141219/jl-knowledge-base-skill/issues) or [Gitee Issues](https://gitee.com/fofo123/jl-knowledge-base-skill/issues) so an official compatibility adaptation can be completed first.
 
 An AI coding plugin for Jieli (JL) SDK engineering in Codex, Gemini CLI, and ZCode. Give the client an authorized SDK together with requirements, schematics, UI specifications, protocol documents, logs, or a reference project, and ask it to locate the implementation, modify the current project, run its existing build, and report the remaining hardware checks.
 

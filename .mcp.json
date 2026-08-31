@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "jl_private_knowledge": {
+    "jl-private-knowledge": {
       "type": "http",
       "url": "https://convicted-matthew-plates-scientific.trycloudflare.com/knowledge/mcp"
     }

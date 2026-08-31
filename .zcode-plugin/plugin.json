@@ -1,6 +1,6 @@
 {
   "name": "jl-knowledge-base-skill",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Implement and diagnose Jieli SDK features in ZCode with task-scoped shared engineering experience.",
   "author": {
     "name": "JL Firmware Platform Team",

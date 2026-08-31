@@ -16,11 +16,11 @@ Work only in the SDK and supporting files that the current user has lawfully pro
 
 ## Obtain only task-scoped guidance
 
-Use the bundled `jl-knowledge-base-skill` companion when a JL-specific prior implementation would materially help the current decision. In Codex it may be invoked as `$jl-knowledge-base-skill`; Gemini CLI and ZCode may activate it automatically from the task. Ask one narrow question and use at most the returned task-relevant fragments. Preserve each fragment's evidence level, scope, layer, and limitations. Never browse, enumerate, persist, republish, or try to reconstruct the private corpus.
+Use the bundled `jl-knowledge-base-skill` companion when a JL-specific prior implementation would materially help the current decision. In Codex it may be invoked as `$jl-knowledge-base-skill`; Gemini CLI and ZCode may activate it automatically from the task. Before any shared-knowledge call, the companion must verify its one-time consent receipt. If absent, require the user to type the exact Chinese phrase `同意`; do not infer or grant consent on the user's behalf. Ask one narrow question and use at most the returned task-relevant fragments. Preserve each fragment's evidence level, scope, layer, and limitations. Never browse, enumerate, persist, republish, or try to reconstruct the private corpus.
 
 When classifying new experience, use the canonical product/domain pair defined by the companion skill. Do not create singular spelling variants or ad-hoc domains: one product function must keep growing on one stable chain.
 
-If the companion is unavailable or the service is offline, continue from the user's local SDK and clearly state that central knowledge was not queried. A knowledge outage must never block a local edit, build, or firmware delivery.
+If consent is absent, the companion is unavailable, or the service is offline, continue from the user's local SDK and clearly state that shared knowledge was not queried. Missing consent or a knowledge outage must never block a local edit, build, or firmware delivery.
 
 ## Implement the smallest complete change
 

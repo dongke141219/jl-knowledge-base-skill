@@ -27,7 +27,7 @@ CONTRIBUTION_WORKFLOW = SKILL.parent / "references" / "contribution-workflow.md"
 GATEWAY_CONTRACT = SKILL.parent / "references" / "gateway-contract.md"
 OUTBOX = ROOT / "scripts" / "knowledge_outbox.py"
 PUBLIC_MCP_URL = "https://convicted-matthew-plates-scientific.trycloudflare.com/knowledge/mcp"
-CONSENT_PHRASE = "I_AGREE_TO_AUTOMATIC_SANITIZED_JL_KNOWLEDGE_CONTRIBUTION"
+CONSENT_PHRASE = "同意"
 REVOCATION_PHRASE = "REVOKE_AND_DELETE_PENDING_CONTRIBUTIONS"
 SANITIZATION_ACK = "STRUCTURED_ONLY_NO_SOURCE_LOG_IDENTITY_PATH_KEY_OR_CREDENTIAL"
 
@@ -45,6 +45,17 @@ def public_text() -> str:
 
 
 class PublicBundleTests(unittest.TestCase):
+    def test_public_readme_has_direct_upgrade_and_client_adaptation_notice(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        for phrase in (
+            "旧版 Skill 的共享知识访问已经暂停",
+            "https://github.com/dongke141219/jl-knowledge-base-skill",
+            "https://gitee.com/fofo123/jl-knowledge-base-skill",
+            "Codex、Gemini CLI 和 ZCode",
+            "由作者完成兼容适配后再使用",
+        ):
+            self.assertIn(phrase, readme)
+
     def test_manifest_is_distribution_ready(self) -> None:
         payload = json.loads(MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(payload["name"], "jl-knowledge-base-skill")
@@ -54,7 +65,7 @@ class PublicBundleTests(unittest.TestCase):
         self.assertEqual(payload["skills"], "./skills/")
         self.assertEqual(payload["mcpServers"], "./.mcp.json")
         mcp = json.loads((ROOT / ".mcp.json").read_text(encoding="utf-8"))
-        self.assertEqual(mcp["mcpServers"]["jl_private_knowledge"]["url"], PUBLIC_MCP_URL)
+        self.assertEqual(mcp["mcpServers"]["jl-private-knowledge"]["url"], PUBLIC_MCP_URL)
         self.assertTrue(payload["author"]["name"])
         self.assertTrue(payload["interface"]["displayName"])
 
@@ -63,7 +74,7 @@ class PublicBundleTests(unittest.TestCase):
         self.assertEqual(payload["name"], "jl-knowledge-base-skill")
         self.assertRegex(payload["version"], r"^\d+\.\d+\.\d+$")
         self.assertEqual(payload["contextFileName"], "GEMINI.md")
-        server = payload["mcpServers"]["jl_private_knowledge"]
+        server = payload["mcpServers"]["jl-private-knowledge"]
         self.assertEqual(server["httpUrl"], PUBLIC_MCP_URL)
         self.assertEqual(
             set(server["includeTools"]),
@@ -108,6 +119,7 @@ class PublicBundleTests(unittest.TestCase):
         self.assertEqual(entry["name"], payload["name"])
         self.assertEqual(entry["version"], payload["version"])
         self.assertEqual(entry["source"], ".")
+        self.assertEqual(entry["category"], "developer-tools")
         self.assertTrue(entry["strict"])
 
         for command_path in (ZCODE_IMPLEMENT_COMMAND, ZCODE_DIAGNOSE_COMMAND):
@@ -124,6 +136,8 @@ class PublicBundleTests(unittest.TestCase):
         self.assertIn('type: "mcp"', yaml_text)
         self.assertIn('transport: "streamable_http"', yaml_text)
         self.assertIn(f'url: "{PUBLIC_MCP_URL}"', yaml_text)
+        self.assertIn('value: "jl-private-knowledge"', yaml_text)
+        self.assertNotIn("jl_private_knowledge", yaml_text)
         skill_text = SKILL.read_text(encoding="utf-8")
         self.assertIn("create_knowledge_task", skill_text)
         self.assertIn("query_task_fragments", skill_text)
@@ -155,6 +169,9 @@ class PublicBundleTests(unittest.TestCase):
     def test_examples_match_gateway_v1_wire_shape(self) -> None:
         contract = (SKILL.parent / "references" / "gateway-contract.md").read_text(encoding="utf-8")
         for field in (
+            '"contribution_consent"',
+            '"contribution_consent_version"',
+            '"2026-08-31-v2"',
             '"purpose"',
             '"allowed_tools"',
             '"max_requests"',
@@ -169,15 +186,16 @@ class PublicBundleTests(unittest.TestCase):
             '"product_id"',
             '"domain_id"',
             '"candidate_taxonomy"',
-            '"status": "accepted_to_incubator"',
-            '"verification_status": "unverified"',
+            '"candidate_kind"',
+            '"status": "queued_for_review"',
+            '"verification_status": "pending_internal_review"',
         ):
             self.assertIn(field, contract)
         for obsolete_field in (
             '"task": {\n    "summary"',
             '"dedupe_key"',
             '"candidate_status"',
-            '"status": "' + "queued" + '_for_review"',
+            '"status": "accepted' + '_to_incubator"',
         ):
             self.assertNotIn(obsolete_field, contract)
 
@@ -205,10 +223,10 @@ class PublicBundleTests(unittest.TestCase):
             "verified_pass",
             "parent_semantic_id",
             "semantic_id",
-            '"status": "accepted_to_incubator"',
+            '"status": "queued_for_review"',
             "Never send an empty or wildcard query",
             "Do not expose a `list`",
-            "one-time consent",
+            "Required one-time access and contribution agreement",
             "outbox-first",
             "never run or contact the knowledge owner's AI coding client",
             "product → domain → capability → subfeature → boundary → issue",
@@ -241,11 +259,30 @@ class PublicBundleTests(unittest.TestCase):
             REVOCATION_PHRASE,
             SANITIZATION_ACK,
             "ready --limit 3",
-            "status: accepted_to_incubator",
+            "status: queued_for_review",
             "idempotency_key",
             "30 days",
         ):
             self.assertIn(phrase, text)
+
+    def test_supported_clients_explain_consent_runtime_and_adaptation_contact(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        gemini = GEMINI_CONTEXT.read_text(encoding="utf-8")
+        skill = SKILL.read_text(encoding="utf-8")
+        privacy = (ROOT / "PRIVACY.md").read_text(encoding="utf-8")
+        terms = (ROOT / "TERMS.md").read_text(encoding="utf-8")
+        contract = GATEWAY_CONTRACT.read_text(encoding="utf-8")
+
+        self.assertIn("Python 3.10", readme)
+        self.assertIn("Python 3.10", gemini)
+        self.assertIn("Python 3.10", skill)
+        self.assertIn("knowledge_outbox.py grant --accept 同意", gemini)
+        self.assertIn("GitHub Issues", readme)
+        self.assertIn("Gitee Issues", readme)
+        self.assertIn("经作者完成适配的其他客户端", privacy)
+        self.assertIn("经作者完成适配的其他客户端", terms)
+        self.assertIn("current temporary public test endpoint", contract)
+        self.assertNotIn("intentionally non-routable", contract)
 
     def test_public_access_is_separate_from_customer_platform_and_internal_worker(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -282,7 +319,7 @@ class PublicBundleTests(unittest.TestCase):
             self.assertIn(phrase, readme)
 
         self.assertIn("匿名限流", privacy)
-        self.assertIn("不要求注册、登录、申请、批准或个人凭据", terms)
+        self.assertIn("不要求注册、登录、申请、逐人批准或个人凭据", terms)
         self.assertIn("Public knowledge access requires no registration", skill)
         self.assertIn("/api/worker/knowledge/*", contract)
         self.assertIn("one operator-controlled master switch", contract)
@@ -332,6 +369,7 @@ class OutboxTests(unittest.TestCase):
     @staticmethod
     def candidate() -> dict[str, object]:
         return {
+            "candidate_kind": "solution",
             "product_id": "product.tws-earbuds",
             "domain_id": "domain.audio-acoustic",
             "capability_id": "capability.anc-transparency",
@@ -372,6 +410,7 @@ class OutboxTests(unittest.TestCase):
     def test_requires_one_time_consent_then_deduplicates_stably(self) -> None:
         status = self.run_outbox("status")
         self.assertFalse(status["consent_granted"])
+        self.assertFalse(status["shared_knowledge_access_enabled"])
         rejected = self.run_outbox(
             "enqueue",
             "--candidate-file",
@@ -383,7 +422,14 @@ class OutboxTests(unittest.TestCase):
         )
         self.assertIn("consent", str(rejected["error"]).lower())
 
+        approximate = self.run_outbox(
+            "grant", "--accept", "我同意", expected_code=2
+        )
+        self.assertIn("同意", str(approximate["error"]))
+        self.assertFalse(self.run_outbox("status")["consent_granted"])
+
         self.grant()
+        self.assertTrue(self.run_outbox("status")["shared_knowledge_access_enabled"])
         first = self.enqueue()
         second = self.enqueue()
         self.assertEqual(first["id"], second["id"])
@@ -396,7 +442,72 @@ class OutboxTests(unittest.TestCase):
         self.assertEqual(entry["id"], first["id"])
         self.assertEqual(entry["candidate"]["product_id"], "product.tws-earbuds")
         self.assertEqual(entry["candidate"]["domain_id"], "domain.audio-acoustic")
+        self.assertEqual(entry["candidate"]["candidate_kind"], "solution")
         self.assertNotIn("task_id", entry)
+
+    def test_knowledge_gap_is_stored_only_as_an_unverified_issue(self) -> None:
+        self.grant()
+        gap = self.candidate()
+        gap.update(
+            {
+                "candidate_kind": "knowledge_gap",
+                "semantic_id": "issue.anc-fade-delay-missing",
+                "node_type": "issue",
+                "title": "ANC fade delay knowledge gap",
+                "summary": "No reliable reusable answer was established for the scoped ANC fade delay decision.",
+                "lifecycle_status": "processed_pending_verification",
+                "evidence_level": "E1",
+            }
+        )
+        queued = self.enqueue(gap)
+        self.assertTrue(queued["queued"])
+        entry = self.run_outbox("ready", "--limit", "3")["entries"][0]
+        self.assertEqual(entry["candidate"]["candidate_kind"], "knowledge_gap")
+
+        invalid = copy.deepcopy(gap)
+        invalid["evidence_level"] = "E2"
+        response = self.run_outbox(
+            "enqueue",
+            "--candidate-file",
+            "-",
+            "--sanitization-ack",
+            SANITIZATION_ACK,
+            candidate=invalid,
+            expected_code=2,
+        )
+        self.assertIn("knowledge_gap", str(response["error"]))
+
+    def test_candidate_kind_is_required_instead_of_silently_assuming_solution(self) -> None:
+        self.grant()
+        candidate = self.candidate()
+        del candidate["candidate_kind"]
+        response = self.run_outbox(
+            "enqueue",
+            "--candidate-file",
+            "-",
+            "--sanitization-ack",
+            SANITIZATION_ACK,
+            candidate=candidate,
+            expected_code=2,
+        )
+        self.assertIn("candidate_kind", str(response["error"]))
+
+    def test_relation_type_must_match_the_gateway_enum(self) -> None:
+        self.grant()
+        candidate = self.candidate()
+        candidate["relations"] = [
+            {"type": "related_to", "target_semantic_id": "capability.anc-transparency"}
+        ]
+        response = self.run_outbox(
+            "enqueue",
+            "--candidate-file",
+            "-",
+            "--sanitization-ack",
+            SANITIZATION_ACK,
+            candidate=candidate,
+            expected_code=2,
+        )
+        self.assertIn("depends_on", str(response["error"]))
 
     def test_product_and_domain_are_required_stable_generic_ids(self) -> None:
         self.grant()

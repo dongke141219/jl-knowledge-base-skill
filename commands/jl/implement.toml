@@ -4,5 +4,7 @@ Implement the following requirement in the current authorized Jieli (JL) SDK:
 
 {{args}}
 
+Before any shared-knowledge tool call, check the bundled one-time consent state. If absent, show the prominent Knowledge Co-growth disclosure, require the user to type the exact Chinese phrase 同意, and stop shared-knowledge access until that exact answer is received. Never consent on the user's behalf. Local-only SDK work may continue without shared knowledge.
+
 Inspect the current project first and infer the product, chip, SDK version, board, configuration ownership, and existing build entry when possible. Use only a few task-relevant JL knowledge fragments when they materially help. Modify the smallest complete set of files, run the project's existing real build when the environment permits, and report: completed changes, build result, risks, and remaining hardware checks. Do not stop at general advice unless implementation is blocked by missing project evidence or user authorization.
 """
