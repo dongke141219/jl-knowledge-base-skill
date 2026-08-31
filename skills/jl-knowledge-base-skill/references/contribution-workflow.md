@@ -49,7 +49,7 @@ At the start and end of a substantive task, request at most three due entries:
 For each entry:
 
 1. Obtain a narrow server-issued task if the current JL task has no suitable live `task_id`. Do not save a task ID in the outbox.
-2. Call `submit_knowledge_candidate` with `task_id`, `candidate`, and `idempotency_key` equal to the outbox entry `id`.
+2. Call `submit_knowledge_candidate` with `task_id`, `candidate`, `client_version: "0.7.0"`, and `idempotency_key` equal to the outbox entry `id`.
 3. Only after `status: queued_for_review`, remove it:
 
 ```text
@@ -76,7 +76,11 @@ If an identical hash was previously withdrawn by the service, the idempotent res
 
 Only a genuinely corrected implementation or evidence record should be submitted again; its normalized content will produce a different SHA-256 key.
 
-Synchronization is best effort. Do not delay the main JL result indefinitely, mark it failed, or run the owner's AI coding client because the gateway is offline. A stored candidate is not public knowledge: it remains unavailable to queries until internal review accepts it into the formal shared knowledge base.
+Synchronization retries are best effort and must never roll back completed local engineering work or run the owner's AI coding client. A stored candidate is not public knowledge and is not a successful closeout: it remains unavailable to queries until the server accepts it into the candidate area of the one shared knowledge base and internal review later accepts it into the formal area.
+
+## Required task closeout
+
+At the end of every substantive JL task with current consent, exactly one state must come from an actual successful MCP result for the current server task. A successful query with one or more formal fragments is **usage recorded**. A successful query with an empty `fragments` list is **server gap**; the server records that scoped miss, so do not submit a duplicate gap just to satisfy the hook. A reusable local finding becomes **solution candidate** only after its sanitized `candidate_kind: solution` is enqueued and the server returns `status: queued_for_review`; this later success replaces the query state. Failed, malformed, withdrawn, cross-task, local-only, or answer-text claims never count. Codex `Stop` continues to block until a real state exists and does not allow a second-stop bypass. Every create, query, and submit payload includes `client_version: "0.7.0"`.
 
 ## Candidate shape
 

@@ -1,0 +1,46 @@
+{
+  "description": "JL task lifecycle guardrails. Review and trust with /hooks before use.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$PLUGIN_ROOT/hooks/jl_lifecycle.py\"",
+            "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\run_jl_lifecycle.cmd\"\"",
+            "timeout": 5,
+            "statusMessage": "Preparing JL task workflow",
+            "additionalContextLimit": 800
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^(Bash|mcp__.*__(query_task_fragments|submit_knowledge_candidate))$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$PLUGIN_ROOT/hooks/jl_lifecycle.py\"",
+            "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\run_jl_lifecycle.cmd\"\"",
+            "timeout": 5,
+            "statusMessage": "Updating JL task lifecycle"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$PLUGIN_ROOT/hooks/jl_lifecycle.py\"",
+            "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\run_jl_lifecycle.cmd\"\"",
+            "timeout": 5,
+            "statusMessage": "Checking JL task closeout"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,12 +1,14 @@
 # Gateway contract and configuration
 
-The URL in `agents/openai.yaml` is the current temporary public test endpoint and may change when the service moves to its permanent domain. Update only that HTTPS MCP URL in a future release; never place a token, password, NAS address, client secret, registration flow, or approval flow in this plugin. The public endpoint is anonymous, and a public user does not register or sign in to the customer web platform.
+The URL in `agents/openai.yaml` is the current temporary public test endpoint and may change when the service moves to its permanent domain. It includes `?client_version=0.7.0`; every tool payload also includes `client_version: "0.7.0"`. Update only that HTTPS MCP URL in a future release; never place a token, password, NAS address, client secret, registration flow, or approval flow in this plugin. The public endpoint is anonymous, and a public user does not register or sign in to the customer web platform.
 
 The public endpoint is a gateway, not direct NAS or filesystem access. It exposes only three MCP tools. Every query and candidate submission must carry a random, short-lived `task_id` issued by `create_knowledge_task`. The server binds that ID to the anonymous network-rate bucket and the declared product/chip/SDK scope, rejects missing, expired, invented, or cross-bucket IDs, and never offers task enumeration.
 
 Public GitHub access and the internal platform are separate channels. The public gateway has one operator-controlled master switch and no per-user approval or credential management. Turning on that switch makes the anonymous service available to every public installation; turning it off makes all public task, query, proposal, and MCP requests unavailable immediately while leaving `/api/worker/knowledge/*`, the owner's full global Skill, customer web jobs, and the Windows build host unaffected. The internal worker bearer is never accepted by the public gateway.
 
 One-time access-and-contribution consent and the offline outbox are described in `contribution-workflow.md`; they are not registration, per-user approval, or gateway credentials. The helper makes no network or model calls. The client must hold a current local receipt and send the exact consent acknowledgement when creating a task; the server binds that acknowledgement to the task and rejects public query or contribution without it. The MCP connection belongs to the current user, and no gateway request starts or consumes the knowledge owner's AI coding client.
+
+When the server pauses an old public client, it returns the full upgrade notice with `https://github.com/dongke141219/jl-knowledge-base-skill` and `https://gitee.com/fofo123/jl-knowledge-base-skill`. The client stops shared calls until it is upgraded to v0.7.0, restarted, placed in a new task, and newly consented. A fully offline old package cannot receive a NAS push update.
 
 ## `create_knowledge_task`
 
@@ -16,6 +18,7 @@ Request:
 {
   "contribution_consent": "同意",
   "contribution_consent_version": "2026-08-31-v2",
+  "client_version": "0.7.0",
   "purpose": "Concrete problem, feature, or decision",
   "product": "Concrete product form inferred from the current project",
   "chip": "Concrete JL chip inferred from the current project",
@@ -26,13 +29,14 @@ Request:
 }
 ```
 
-`contribution_consent`, `contribution_consent_version`, `purpose`, a concrete `product`, and a concrete `chip` are always required for anonymous public access. Infer product and chip from the authorized current project first; ask one short plain-language clarification only when the project and request together still cannot identify them. `contribution_consent` must be the exact value `同意`; `contribution_consent_version` must equal the current local receipt's `disclosure_version` (`2026-08-31-v2` for this release). Both consent fields may be sent only after the user has personally entered the exact phrase and the current local receipt exists. An old or unknown consent version is rejected so material disclosure changes require a fresh agreement. The client creates one task for one concrete work item and must not invent, enumerate, share, or reuse its ID for another user or task.
+`contribution_consent`, `contribution_consent_version`, `client_version`, `purpose`, a concrete `product`, and a concrete `chip` are always required for anonymous public access. Infer product and chip from the authorized current project first; ask one short plain-language clarification only when the project and request together still cannot identify them. `contribution_consent` must be the exact value `同意`; `contribution_consent_version` must equal the current local receipt's `disclosure_version` (`2026-08-31-v2` for this release). Both consent fields may be sent only after the user has personally entered the exact phrase and the current local receipt exists. An old or unknown consent version is rejected so material disclosure changes require a fresh agreement. The client creates one task for one concrete work item and must not invent, enumerate, share, or reuse its ID for another user or task.
 
 Response:
 
 ```json
 {
   "task_id": "Server-issued opaque task identifier",
+  "client_version": "0.7.0",
   "consent_version": "Server-controlled current disclosure version",
   "scope": {
     "purpose": "Concrete problem, feature, or decision",
@@ -59,13 +63,14 @@ Request:
 ```json
 {
   "task_id": "Server-issued opaque task identifier",
+  "client_version": "0.7.0",
   "query": "Specific sanitized question or decision",
   "include_incubator": false,
   "limit": 5
 }
 ```
 
-The gateway rejects empty, wildcard, enumeration, range, inventory, pagination, bulk, document-fetch, and export requests. The anonymous public service requires `include_incubator: false`: only administrator-reviewed formal shared knowledge may be returned. Pending candidates and knowledge gaps are never query results. `limit` can never exceed the server cap.
+The gateway rejects empty, wildcard, enumeration, range, inventory, pagination, bulk, document-fetch, and export requests. The anonymous public service requires `include_incubator: false`: only administrator-reviewed content from the formal area of the one shared knowledge base may be returned. Pending items in its candidate area and knowledge gaps are never query results. `limit` can never exceed the server cap.
 
 Response:
 
@@ -118,6 +123,7 @@ Request:
 ```json
 {
   "task_id": "Server-issued opaque task identifier",
+  "client_version": "0.7.0",
   "idempotency_key": "Canonical candidate SHA-256 returned by the local outbox",
   "candidate": {
     "candidate_kind": "solution",
@@ -151,7 +157,7 @@ Request:
 `candidate_kind` is mandatory for the current client:
 
 - `solution`: a concrete reusable finding based on work actually performed in this task.
-- `knowledge_gap`: a narrow query missed and the completed task still has no reliable answer. It must use `node_type: issue`, remain in the candidate library, and can never be merged or returned as formal knowledge. A guess, incomplete attempt, or model-only assertion must not be labelled as a solution.
+- `knowledge_gap`: a narrow query missed and the completed task still has no reliable answer. It must use `node_type: issue`, remain in the candidate area of the one shared knowledge base, and can never enter the formal area or be returned as an answer. A guess, incomplete attempt, or model-only assertion must not be labelled as a solution.
 
 Every relation object may contain only `type` and `target_semantic_id`. `type` must be one of `contains`, `depends_on`, `extends`, `alternative`, or `supersedes`; other locally invented relation names are rejected before upload. Semantic identifiers and relation targets are limited to 120 characters.
 
@@ -160,7 +166,7 @@ Every relation object may contain only `type` and `target_semantic_id`. `type` m
 - `processed_pending_verification`: E1; one meaningful flow was handled, with no real build PASS.
 - `compiled_pending_hardware`: E2; a real build passed and hardware verification is pending.
 - `verified_failed`: E1/E2; an explicit failure was received and remains attached to the same semantic node.
-- `verified_pass`: E3/E4 may describe the submitter's scenario-correct hardware claim, but an external claim remains pending in the candidate library until internal review. Only platform-held evidence and review can create formal shared knowledge.
+- `verified_pass`: E3/E4 may describe the submitter's scenario-correct hardware claim, but an external claim remains pending in the candidate area of the one shared knowledge base until internal review. Only reviewed evidence can move it into the formal area.
 
 No response or missing customer feedback leaves the candidate pending and never becomes `verified_failed`.
 
@@ -168,7 +174,7 @@ Response:
 
 ```json
 {
-  "candidate_id": "Opaque candidate-library identifier",
+  "candidate_id": "Opaque candidate-area identifier",
   "proposal_id": "Compatibility alias for the candidate identifier",
   "task_id": "Server-issued opaque task identifier",
   "idempotency_key": "Same explicit key supplied by the client",
@@ -179,7 +185,7 @@ Response:
 }
 ```
 
-The client acknowledges and deletes its local outbox item only for `status: queued_for_review`. Repeating the same `idempotency_key` returns the same logical queue record without creating another candidate. The server owns exact-hash and stable-semantic-key deduplication but deliberately does not reveal whether a submission matched an internal node. Successful submission does not write a formal node and is not searchable by public users. An internal review must accept a `solution` before it can enter the formal shared knowledge base; a `knowledge_gap` can never be promoted as an answer.
+The client acknowledges and deletes its local outbox item only for `status: queued_for_review`. Repeating the same `idempotency_key` returns the same logical queue record without creating another candidate. The server owns exact-hash and stable-semantic-key deduplication but deliberately does not reveal whether a submission matched an internal node. Successful submission stays in the candidate area and is not searchable by public users. An internal review must accept a `solution` before it can enter the formal area of the same shared knowledge base; a `knowledge_gap` can never be promoted as an answer.
 
 After an administrator withdraws an accepted source, replaying that same idempotency key returns `status: withdrawn`. The client must drop the local entry with reason `server_withdrawn` instead of retrying forever. Corrected knowledge must change the candidate content and therefore produce a new canonical hash.
 
@@ -187,17 +193,17 @@ After an administrator withdraws an accepted source, replaying that same idempot
 
 - Public HTTPS MCP transport with anonymous access and no registration, login, per-user approval, or individual credential; exact one-time `同意` acknowledgement is mandatory before task creation.
 - One public-only master switch: enabled means every public installation can use the service, disabled means every public installation is stopped; the switch must not gate internal worker knowledge routes.
-- Public task-create, formal-query, and candidate-submit capabilities; anonymous public access cannot request the candidate-library or internal-worker read capability.
+- Public task-create, formal-query, and candidate-submit capabilities; anonymous public access cannot request the knowledge base's candidate area or internal-worker read capability.
 - Server-bound, expiring `task_id` on every query and submission, with no task listing and no cross-bucket reuse.
 - Mandatory server-controlled `product_id` and `domain_id` pair on every candidate; reject identity-derived or invented IDs and include both in semantic deduplication.
 - Maximum five fragments and 24 KiB per response, output redaction, anonymous network-bucket atomic rate limits, active/daily task limits, a public global daily unique-fragment budget, request-count limits, audit logging, and reconstruction-abuse detection.
-- Candidate knowledge and knowledge gaps isolated from the formal shared knowledge base; new external submissions are not searchable until an internal administrator review accepts a safe `solution`.
+- Candidate knowledge and knowledge gaps are isolated in the candidate area of the one shared knowledge base; new external submissions are not searchable until an internal administrator review accepts a safe `solution` into its formal area.
 - No general NAS, shell, database, source-document, or filesystem tool.
 
 Run the bundle's offline checks before packaging:
 
 ```text
-python -m unittest discover -s tests -v
-python <plugin-creator>/scripts/validate_plugin.py .
-python <skill-creator>/scripts/quick_validate.py skills/jl-knowledge-base-skill
+python -X utf8 -m unittest discover -s tests -v
+python -X utf8 <plugin-creator>/scripts/validate_plugin.py .
+python -X utf8 <skill-creator>/scripts/quick_validate.py skills/jl-knowledge-base-skill
 ```

@@ -1,12 +1,20 @@
 # JL Knowledge Base Skill — Codex、Gemini CLI 与 ZCode
 
+> **v0.7.0：自然语言直接提问即可。** 不必输入 `$` Skill 名称或固定命令；唯一主工作流会完成同意、受限查询、本地实施和知识收口。
+
+> **官方下载入口（内容一致，任选一个即可）：** [GitHub](https://github.com/dongke141219/jl-knowledge-base-skill) · [Gitee](https://gitee.com/fofo123/jl-knowledge-base-skill)
+
+> **Codex 用户必须先在 `/hooks` 审核并信任本插件 hooks。** hooks 只读取当次工具的结构化成功结果，在插件数据目录仅保存同意状态、`task_id` 的 SHA-256 和一个收口结果枚举；不保存原始问题、源码、日志、知识片段或工具输出。回答里只写“已收口”不算完成，必须有真实成功的知识查询或候选提交回执。
+
 > ## ⚠️ 使用前请先同意「知识共同成长计划」
 >
 > JL Knowledge Base Skill 是大家共同使用、共同完善的共享知识服务。
 >
 > 您在使用知识库解决 JL SDK 问题的同时，如果任务中形成了可复用的解决方法，系统会自动提取一份**脱敏的知识候选**上传。大家贡献的经验越多，知识库就越完整，今后遇到相同问题时就能更快找到答案、减少重复排查，也可能节省 AI Token。
 >
-> 系统不会上传或公开您的完整 SDK、完整源码、原理图、UI 文档、固件、原始日志、工程路径、客户身份、密码或密钥。只会整理与问题有关的结构化经验，例如：适用芯片和 SDK、问题现象、原因、解决方法以及验证情况。新内容会先进入候选知识库，审核通过后才会提供给其他用户。
+> **这里只有一个共享知识库。** 它不只记录问题点，还会按清晰的功能链整理：能实现什么功能、工程实现指南、适用产品/芯片/SDK、使用边界、问题原因与解决方法，以及真实编译和实机验证证据。新贡献先进入同一个知识库里的**候选区**接受安全审核；审核通过后再进入**正式区**，不会另起一套知识库。
+>
+> 系统不会上传或公开您的完整 SDK、完整源码、原理图、UI 文档、固件、原始日志、工程路径、客户身份、密码或密钥。只会整理与任务有关的少量结构化、脱敏经验。
 >
 > **使用共享知识库，就代表需要共同贡献可复用经验。只有大家一起贡献，大家才能共同拥有更全面、更准确、更好用的 JL 知识库。**
 >
@@ -14,7 +22,7 @@
 >
 > **未输入“同意”，将无法访问 JL 共享知识库。**您仍可继续使用自己的 AI 客户端处理本地 SDK，但不会取得共享知识片段。
 >
-> **旧版 Skill 的共享知识访问已经暂停。**如果使用时看到升级提示，请直接前往 [GitHub](https://github.com/dongke141219/jl-knowledge-base-skill) 或 [Gitee](https://gitee.com/fofo123/jl-knowledge-base-skill) 获取最新版，重新启动客户端并新建任务后使用；本地 SDK 检查、修改和编译不受影响。
+> **旧版 Skill 的共享知识访问已经暂停。**请直接前往 [GitHub](https://github.com/dongke141219/jl-knowledge-base-skill) 或 [Gitee](https://gitee.com/fofo123/jl-knowledge-base-skill) 升级到 v0.7.0，重新启动客户端并新建任务后使用；本地 SDK 检查、修改和编译不受影响。完全离线的旧包不能接收 NAS 主动推送更新，只有联网访问服务时才会收到升级提示。
 >
 > 目前已适配 **Codex、Gemini CLI 和 ZCode**。若您希望在其他 AI 编程客户端中使用本 Skill，请通过 [GitHub Issues](https://github.com/dongke141219/jl-knowledge-base-skill/issues) 或 [Gitee Issues](https://gitee.com/fofo123/jl-knowledge-base-skill/issues) 联系作者，由作者完成兼容适配后再使用。
 
@@ -31,6 +39,19 @@
 - **经验带着可信边界**：共享经验会区分“已处理”“真实编译通过”和“实机验证通过”，避免把未经验证的结论说成最终答案。
 - **遇到相似问题更省时间**：已经解决过的功能、踩过的坑、适用条件和验证结果可以沉淀成可复用经验，下次遇到相似项目时更快进入正确方向。
 - **可能减少 Token 消耗**：知识服务只返回当前任务需要的少量片段，可减少重复解释背景、全工程盲目搜索和多轮试错带来的上下文消耗。实际节省量取决于任务复杂度、工程规模和所用模型。
+
+## 一个知识库，覆盖完整工程经验
+
+共享知识不是只有“问题和答案”，而是放在同一个清晰的知识体系中：
+
+- **能实现什么功能**：按产品和功能域说明可复用能力与子功能。
+- **工程实现指南**：说明常见功能从哪里入手、怎样落到工程、需要核对哪些配置和模块。
+- **适用范围**：标明产品形态、芯片、SDK 版本、平台和板级条件。
+- **边界与限制**：明确哪些条件下适用、哪些情况不能直接照搬。
+- **问题解决经验**：记录现象、原因、处理方法、失败路径和避免重复踩坑的检查项。
+- **证据等级**：区分已分析或完成处理、真实编译通过、实机验证通过，避免把推测当成结论。
+
+所有已审核内容都在这个唯一知识库的正式区；外部用户新贡献的脱敏经验先放在同一个知识库的候选区，审核后再并入对应功能链。
 
 ## 可以做什么
 
@@ -58,7 +79,7 @@
 然后直接说明目标，例如：
 
 ```text
-使用 $jl-sdk-engineer-core，结合我上传的原理图、UI 交互文档和当前 JL SDK，
+结合我上传的原理图、UI 交互文档和当前 JL SDK，
 完成充电仓 UI、电量显示和耳机状态同步功能。
 
 请先核对板级引脚和现有代码，再修改必要文件，使用项目已有的 Makefile 编译，
@@ -70,7 +91,7 @@
 ### 3. 排查问题并完成修复
 
 ```text
-使用 $jl-sdk-engineer-core，结合 JL 知识库排查当前项目左右耳状态不同步的问题。
+结合 JL 知识库排查当前项目左右耳状态不同步的问题。
 请检查现有实现和配置，找到原因并完成修复，使用项目自己的构建入口编译验证，
 不要只给建议，要告诉我修改了什么以及还需要怎样进行实机测试。
 ```
@@ -80,7 +101,7 @@
 ### 4. 参考已有项目移植功能
 
 ```text
-使用 $jl-sdk-engineer-core，把参考工程中的三击切换 ANC 模式功能移植到当前 SDK。
+把参考工程中的三击切换 ANC 模式功能移植到当前 SDK。
 先比较两个工程的芯片、SDK 版本、板级配置和事件流程，只移植当前项目真正需要的部分，
 完成后做真实编译并说明风险与实机测试项。
 ```
@@ -107,7 +128,7 @@ JL SDK 中很多问题会重复出现，但不同芯片、SDK 版本、产品形
 
 在用户首次明确输入“同意”后，完成过的实质功能和问题点会被整理成**少量、结构化、脱敏**的经验候选。没有可靠解决结论时，只记录“知识缺口”，不会编造答案。不会把完整源码、客户资料、原始日志、工程路径、固件、KEY、密码、令牌或私有协议内容直接上传为知识。
 
-这些新经验会先进入**候选知识库**，不会马上作为答案提供给其他用户。通过内部审核后才会合并到**正式共享知识库**。以后遇到相似需求时，Codex、Gemini CLI 或 ZCode 只取回当前任务相关的少量正式片段，再以当前工程源码、真实编译和实机结果为准进行判断。随着真实完成和验证过的功能增加，可复用的问题点也会越来越丰富，因此后续项目通常能够更快定位、更少试错，而不是每次从零开始。
+这些新经验会先进入**唯一共享知识库内的候选区**，不会马上作为答案提供给其他用户。通过安全审核后，才会按完整功能链并入同一个知识库的**正式区**。以后遇到相似需求时，Codex、Gemini CLI 或 ZCode 只取回当前任务相关的少量正式片段，再以当前工程源码、真实编译和实机结果为准进行判断。随着可实现功能、工程指南、适用范围、问题解法和验证证据不断增加，后续项目通常能够更快定位、更少试错，而不是每次从零开始。
 
 ## 安装与升级
 
@@ -150,7 +171,7 @@ codex plugin marketplace add dongke141219/jl-knowledge-base-skill --ref main
 codex plugin add jl-knowledge-base-skill@jl-knowledge
 ```
 
-某条删除命令提示“未安装”时可以继续执行后面的命令。完成后重启 Codex，并在新任务中使用 `$jl-sdk-engineer-core`。
+某条删除命令提示“未安装”时可以继续执行后面的命令。完成后重启 Codex、在 `/hooks` 审核并信任新版 hooks，然后新建任务并直接用自然语言描述 JL 需求。
 
 ### Gemini CLI 全新安装
 
@@ -231,7 +252,7 @@ ZCode 会先查看当前 SDK，尽量从工程中识别芯片和版本。只有�
 例如：
 
 ```text
-使用 $jl-sdk-engineer-core 完成这个需求，不要只分析。
+完成这个需求，不要只分析。
 请阅读当前 SDK 和我上传的需求、原理图及 UI 文档，先确认现有实现和硬件连接，
 再修改必要代码，使用项目原有 Makefile 做真实编译。
 最后按“已修改、编译结果、风险、实机验证步骤”四部分告诉我结果。
@@ -250,7 +271,7 @@ Gemini CLI 和 ZCode 可以直接说：
 
 JL 知识服务免费提供；使用者自己的 Codex、Gemini 或 ZCode/GLM 账号、订阅和模型用量由使用者承担。
 
-第一次访问共享知识库时，当前客户端会先醒目说明共同贡献和脱敏范围，并要求用户本人输入“同意”。同意一次后，后续实质任务形成的脱敏知识候选会自动进入候选知识库，不再逐条打断确认；候选经过审核后才可能进入正式共享知识库。不同意不会上传本地内容，也不能访问共享知识库，但不影响用户用自己的客户端继续处理本地 SDK。源码、客户资料、完整日志、路径、固件、KEY、密码、令牌和私有协议内容不会作为知识贡献上传。
+第一次访问共享知识库时，当前客户端会先醒目说明共同贡献和脱敏范围，并要求用户本人输入“同意”。同意一次后，后续实质任务形成的脱敏知识候选会自动进入**同一个知识库内的候选区**，不再逐条打断确认；候选经过审核后才可能进入该知识库的正式区。不同意不会上传本地内容，也不能访问共享知识库，但不影响用户用自己的客户端继续处理本地 SDK。源码、客户资料、完整日志、路径、固件、KEY、密码、令牌和私有协议内容不会作为知识贡献上传。
 
 请只处理你有权使用的 SDK、文档和项目。知识经验用于辅助定位和决策，当前项目源码、真实编译以及实机测试结果始终具有更高优先级。
 
@@ -260,15 +281,19 @@ JL 知识服务免费提供；使用者自己的 Codex、Gemini 或 ZCode/GLM �
 
 # JL Knowledge Base Skill — Codex, Gemini CLI & ZCode
 
+> **Official download mirrors (same package; choose either):** [GitHub](https://github.com/dongke141219/jl-knowledge-base-skill) · [Gitee](https://gitee.com/fofo123/jl-knowledge-base-skill)
+
 > ## ⚠️ Agreement required before shared-knowledge access
 >
 > This is a community-growing knowledge service: users receive task-scoped JL experience and, after substantive work, automatically contribute only a small sanitized knowledge candidate. More verified contributions make future work faster and the shared coverage broader.
 >
-> Complete SDKs, source, schematics, UI documents, firmware, raw logs, project paths, customer identity, passwords, keys, credentials, and private payloads are not uploaded. New candidates stay in a review queue and are not served to other users until approved.
+> There is **one shared knowledge base**. It covers implementable capabilities, engineering implementation guides, product/chip/SDK applicability, boundaries, issue resolutions, and real-build or hardware evidence. Sanitized contributions first stay in the candidate area inside that same knowledge base; reviewed content then joins its formal area. This is not a second “candidate knowledge base.”
+>
+> Complete SDKs, source, schematics, UI documents, firmware, raw logs, project paths, customer identity, passwords, keys, credentials, and private payloads are not uploaded.
 >
 > On first use, the user must type the exact Chinese phrase **同意** in the conversation. Without it, the shared knowledge service cannot be accessed. Local SDK work in the user's own AI client remains available.
 >
-> **Shared-knowledge access from older Skill versions has been paused.** If an upgrade notice appears, download the latest version directly from [GitHub](https://github.com/dongke141219/jl-knowledge-base-skill) or [Gitee](https://gitee.com/fofo123/jl-knowledge-base-skill), restart the client, and begin a new task. Local SDK inspection, editing, and building remain available.
+> **Shared-knowledge access from older Skill versions has been paused.** Upgrade to v0.7.0 directly from [GitHub](https://github.com/dongke141219/jl-knowledge-base-skill) or [Gitee](https://gitee.com/fofo123/jl-knowledge-base-skill), restart the client, and begin a new task. A fully offline old package cannot receive a NAS push update; it can only receive an upgrade notice when it reaches the service. Local SDK inspection, editing, and building remain available.
 >
 > Codex, Gemini CLI, and ZCode are currently supported. To use this Skill in another AI coding client, contact the author through [GitHub Issues](https://github.com/dongke141219/jl-knowledge-base-skill/issues) or [Gitee Issues](https://gitee.com/fofo123/jl-knowledge-base-skill/issues) so an official compatibility adaptation can be completed first.
 
@@ -294,6 +319,8 @@ codex plugin add jl-knowledge-base-skill@jl-knowledge
 ```
 
 Fully restart Codex and start a new task.
+
+Before the first JL task, run `/hooks` and review/trust the plugin's v0.7.0 lifecycle hooks. They inspect only the current structured tool result and persist only consent flags, a SHA-256 of the task ID, and one outcome enum under `PLUGIN_DATA`; they never retain prompts, task IDs, fragments, source, logs, paths, or raw tool output.
 
 ## Upgrade
 
@@ -356,7 +383,7 @@ To update, refresh the `jl-knowledge` source under **Settings → Plugins → Ma
 ## Example
 
 ```text
-Use $jl-sdk-engineer-core to implement this requirement in the current JL SDK.
+Implement this requirement in the current JL SDK.
 Read the attached schematic, UI specification, and protocol document, inspect the current project,
 modify the necessary files, run the project's existing Makefile, and report the completed changes,
 build result, risks, and remaining hardware checks.

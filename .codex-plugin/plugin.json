@@ -1,6 +1,6 @@
 {
   "name": "jl-knowledge-base-skill",
-  "version": "0.6.0+codex.20260831033530",
+  "version": "0.7.0",
   "description": "Turn JL SDK requirements, schematics, UI documents, and shared experience into verified project changes in Codex.",
   "author": {
     "name": "JL Firmware Platform Team",
@@ -25,9 +25,9 @@
       "Write"
     ],
     "defaultPrompt": [
-      "Use $jl-sdk-engineer-core to implement and build this JL SDK requirement.",
-      "Use shared JL knowledge to diagnose this SDK issue and verify the fix.",
-      "Review this JL SDK project and list the remaining hardware checks."
+      "实现当前 JL SDK 需求并完成编译验证。",
+      "排查当前杰理 SDK 问题，找到原因后直接修复。",
+      "检查这个 JL SDK 项目并列出剩余实机验证项。"
     ]
   }
 }

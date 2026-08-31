@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import ast
 import copy
+import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -21,12 +23,13 @@ ZCODE_IMPLEMENT_COMMAND = ROOT / "commands" / "jl-implement.md"
 ZCODE_DIAGNOSE_COMMAND = ROOT / "commands" / "jl-diagnose.md"
 SKILL = ROOT / "skills" / "jl-knowledge-base-skill" / "SKILL.md"
 OPENAI_YAML = ROOT / "skills" / "jl-knowledge-base-skill" / "agents" / "openai.yaml"
-ENGINEER_SKILL = ROOT / "skills" / "jl-sdk-engineer-core" / "SKILL.md"
-ENGINEER_OPENAI_YAML = ROOT / "skills" / "jl-sdk-engineer-core" / "agents" / "openai.yaml"
 CONTRIBUTION_WORKFLOW = SKILL.parent / "references" / "contribution-workflow.md"
 GATEWAY_CONTRACT = SKILL.parent / "references" / "gateway-contract.md"
 OUTBOX = ROOT / "scripts" / "knowledge_outbox.py"
-PUBLIC_MCP_URL = "https://convicted-matthew-plates-scientific.trycloudflare.com/knowledge/mcp"
+HOOKS = ROOT / "hooks" / "hooks.json"
+HOOK_SCRIPT = ROOT / "hooks" / "jl_lifecycle.py"
+HOOK_WINDOWS_LAUNCHER = ROOT / "hooks" / "run_jl_lifecycle.cmd"
+PUBLIC_MCP_URL = "https://convicted-matthew-plates-scientific.trycloudflare.com/knowledge/mcp?client_version=0.7.0"
 CONSENT_PHRASE = "同意"
 REVOCATION_PHRASE = "REVOKE_AND_DELETE_PENDING_CONTRIBUTIONS"
 SANITIZATION_ACK = "STRUCTURED_ONLY_NO_SOURCE_LOG_IDENTITY_PATH_KEY_OR_CREDENTIAL"
@@ -44,6 +47,46 @@ def public_text() -> str:
     return "\n".join(path.read_text(encoding="utf-8") for path in paths)
 
 
+def distribution_text() -> str:
+    return "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in ROOT.rglob("*")
+        if path.is_file()
+        and "tests" not in path.relative_to(ROOT).parts
+        and ".git" not in path.relative_to(ROOT).parts
+        and "__pycache__" not in path.parts
+        and path.suffix != ".pyc"
+    )
+
+
+def invoke_lifecycle_hook(state_dir: Path, event: dict[str, object]) -> dict[str, object]:
+    result = subprocess.run(
+        [sys.executable, "-X", "utf8", str(HOOK_SCRIPT)],
+        input=json.dumps(event, ensure_ascii=False),
+        text=True,
+        encoding="utf-8",
+        capture_output=True,
+        env={**os.environ, "PLUGIN_DATA": str(state_dir)},
+        check=False,
+    )
+    if result.returncode != 0:
+        raise AssertionError(result.stderr or result.stdout)
+    return json.loads(result.stdout) if result.stdout.strip() else {}
+
+
+def consent_tool_event(granted: bool, *, grant: bool = False) -> dict[str, object]:
+    action = "grant --accept 同意" if grant else "status"
+    return {
+        "hook_event_name": "PostToolUse",
+        "tool_name": "Bash",
+        "tool_input": {"command": f'python "scripts/knowledge_outbox.py" {action}'},
+        "tool_response": {
+            "exit_code": 0,
+            "output": json.dumps({"consent_granted": granted}),
+        },
+    }
+
+
 class PublicBundleTests(unittest.TestCase):
     def test_public_readme_has_direct_upgrade_and_client_adaptation_notice(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -53,15 +96,24 @@ class PublicBundleTests(unittest.TestCase):
             "https://gitee.com/fofo123/jl-knowledge-base-skill",
             "Codex、Gemini CLI 和 ZCode",
             "由作者完成兼容适配后再使用",
+            "官方下载入口（内容一致，任选一个即可）",
+            "这里只有一个共享知识库",
+            "能实现什么功能",
+            "工程实现指南",
+            "适用产品/芯片/SDK",
+            "使用边界",
+            "问题原因与解决方法",
+            "真实编译和实机验证证据",
+            "唯一共享知识库内的候选区",
         ):
             self.assertIn(phrase, readme)
+        self.assertNotIn("候选备份区", readme)
+        self.assertNotIn("候选知识库", readme)
 
     def test_manifest_is_distribution_ready(self) -> None:
         payload = json.loads(MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(payload["name"], "jl-knowledge-base-skill")
-        self.assertRegex(
-            payload["version"], r"^\d+\.\d+\.\d+(?:\+codex\.\d{14})?$"
-        )
+        self.assertEqual(payload["version"], "0.7.0")
         self.assertEqual(payload["skills"], "./skills/")
         self.assertEqual(payload["mcpServers"], "./.mcp.json")
         mcp = json.loads((ROOT / ".mcp.json").read_text(encoding="utf-8"))
@@ -72,7 +124,7 @@ class PublicBundleTests(unittest.TestCase):
     def test_gemini_extension_is_distribution_ready(self) -> None:
         payload = json.loads(GEMINI_MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(payload["name"], "jl-knowledge-base-skill")
-        self.assertRegex(payload["version"], r"^\d+\.\d+\.\d+$")
+        self.assertEqual(payload["version"], "0.7.0")
         self.assertEqual(payload["contextFileName"], "GEMINI.md")
         server = payload["mcpServers"]["jl-private-knowledge"]
         self.assertEqual(server["httpUrl"], PUBLIC_MCP_URL)
@@ -104,7 +156,7 @@ class PublicBundleTests(unittest.TestCase):
     def test_zcode_plugin_and_marketplace_are_distribution_ready(self) -> None:
         payload = json.loads(ZCODE_MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(payload["name"], "jl-knowledge-base-skill")
-        self.assertRegex(payload["version"], r"^\d+\.\d+\.\d+$")
+        self.assertEqual(payload["version"], "0.7.0")
         self.assertEqual(
             payload["commands"],
             ["commands/jl-implement.md", "commands/jl-diagnose.md"],
@@ -126,7 +178,8 @@ class PublicBundleTests(unittest.TestCase):
             command = command_path.read_text(encoding="utf-8")
             self.assertIn("description:", command)
             self.assertIn("argument-hint:", command)
-            self.assertIn("skills: jl-sdk-engineer-core,jl-knowledge-base-skill", command)
+            self.assertIn("skills: jl-knowledge-base-skill", command)
+            self.assertNotIn("jl-sdk-engineer-core", command)
             self.assertIn("$ARGUMENTS", command)
             self.assertIn("芯片", command)
             self.assertIn("不要发起空查询、通配查询或知识库遍历", command)
@@ -143,22 +196,22 @@ class PublicBundleTests(unittest.TestCase):
         self.assertIn("query_task_fragments", skill_text)
         self.assertIn("submit_knowledge_candidate", skill_text)
 
-    def test_public_engineering_shell_is_self_contained_but_knowledge_free(self) -> None:
-        skill_text = ENGINEER_SKILL.read_text(encoding="utf-8")
-        agent_text = ENGINEER_OPENAI_YAML.read_text(encoding="utf-8")
+    def test_single_main_skill_contains_local_engineering_and_shared_boundaries(self) -> None:
+        skill_text = SKILL.read_text(encoding="utf-8")
         for phrase in (
-            "$jl-knowledge-base-skill",
             "Makefile",
             "E1",
             "E2",
             "E3",
-            "current user's selected AI coding client",
-            "contains no private corpus",
+            "contains no private knowledge",
+            "Unified main workflow",
+            "Mandatory one-outcome closeout",
+            "solution candidate",
+            "server gap",
         ):
             self.assertIn(phrase, skill_text)
-        self.assertIn("$jl-sdk-engineer-core", agent_text)
-        self.assertFalse((ENGINEER_SKILL.parent / "assets").exists())
-        self.assertFalse((ENGINEER_SKILL.parent / "references" / "knowledge-base").exists())
+        self.assertFalse((ROOT / "skills" / "jl-sdk-engineer-core" / "SKILL.md").exists())
+        self.assertNotIn("$jl-", distribution_text())
 
     def test_query_and_submit_require_server_task_id(self) -> None:
         text = public_text()
@@ -171,6 +224,7 @@ class PublicBundleTests(unittest.TestCase):
         for field in (
             '"contribution_consent"',
             '"contribution_consent_version"',
+            '"client_version": "0.7.0"',
             '"2026-08-31-v2"',
             '"purpose"',
             '"allowed_tools"',
@@ -277,6 +331,7 @@ class PublicBundleTests(unittest.TestCase):
         self.assertIn("Python 3.10", gemini)
         self.assertIn("Python 3.10", skill)
         self.assertIn("knowledge_outbox.py grant --accept 同意", gemini)
+        self.assertIn('client_version: "0.7.0"', gemini)
         self.assertIn("GitHub Issues", readme)
         self.assertIn("Gitee Issues", readme)
         self.assertIn("经作者完成适配的其他客户端", privacy)
@@ -315,6 +370,8 @@ class PublicBundleTests(unittest.TestCase):
             "不需要注册客户网页账号，不需要登录、申请、等待批准或领取个人凭据",
             "JL Knowledge Base Skill",
             "No customer-platform registration, login, application, approval, or individual credential is required",
+            "完全离线的旧包不能接收 NAS 主动推送更新",
+            "`/hooks`",
         ):
             self.assertIn(phrase, readme)
 
@@ -339,6 +396,343 @@ class PublicBundleTests(unittest.TestCase):
         ):
             self.assertNotIn(obsolete, readme + privacy + terms + skill + contract)
 
+    def test_hooks_are_cross_platform_privacy_limited_and_close_once(self) -> None:
+        payload = json.loads(HOOKS.read_text(encoding="utf-8"))
+        self.assertEqual(set(payload["hooks"]), {"UserPromptSubmit", "PostToolUse", "Stop"})
+        for event in payload["hooks"].values():
+            handler = event[0]["hooks"][0]
+            self.assertEqual(handler["type"], "command")
+            self.assertIn("command", handler)
+            self.assertIn("commandWindows", handler)
+            self.assertIn("PLUGIN_ROOT", handler["command"])
+            self.assertIn("PLUGIN_ROOT", handler["commandWindows"])
+            self.assertIn("run_jl_lifecycle.cmd", handler["commandWindows"])
+        launcher = HOOK_WINDOWS_LAUNCHER.read_text(encoding="utf-8").lower()
+        for invocation in (
+            'python -x utf8 "%~dp0jl_lifecycle.py"',
+            'python3 -x utf8 "%~dp0jl_lifecycle.py"',
+            'py -3 -x utf8 "%~dp0jl_lifecycle.py"',
+        ):
+            self.assertIn(invocation, launcher)
+        self.assertIn("sys.version_info >= (3, 10)", launcher)
+        self.assertNotIn("invoke-expression", launcher)
+        self.assertEqual(
+            payload["hooks"]["PostToolUse"][0]["matcher"],
+            "^(Bash|mcp__.*__(query_task_fragments|submit_knowledge_candidate))$",
+        )
+
+        script_text = HOOK_SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("PLUGIN_DATA", script_text)
+        self.assertIn("tool_response", script_text)
+        self.assertIn("knowledge_outcome", script_text)
+        self.assertIn("queried_task_hash", script_text)
+        self.assertNotIn("transcript_path", script_text)
+        self.assertNotIn("last_assistant_message", script_text)
+
+    def test_hook_requires_exact_consent_but_allows_the_disclosure_turn(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state_dir = Path(temporary)
+            injected = invoke_lifecycle_hook(
+                state_dir,
+                {"hook_event_name": "UserPromptSubmit", "prompt": "帮我修复杰理 SDK ANC 无效"},
+            )
+            self.assertIn(
+                "unified bundled workflow",
+                injected["hookSpecificOutput"]["additionalContext"],
+            )
+
+            invoke_lifecycle_hook(state_dir, consent_tool_event(False))
+            disclosure_stop = invoke_lifecycle_hook(
+                state_dir,
+                {"hook_event_name": "Stop", "last_assistant_message": "请输入同意。"},
+            )
+            self.assertNotIn("decision", disclosure_stop)
+
+            agreement = invoke_lifecycle_hook(
+                state_dir, {"hook_event_name": "UserPromptSubmit", "prompt": "同意"}
+            )
+            self.assertIn(
+                "grant --accept", agreement["hookSpecificOutput"]["additionalContext"]
+            )
+            first_stop = invoke_lifecycle_hook(state_dir, {"hook_event_name": "Stop"})
+            second_stop = invoke_lifecycle_hook(
+                state_dir, {"hook_event_name": "Stop", "stop_hook_active": True}
+            )
+            self.assertEqual(first_stop["decision"], "block")
+            self.assertEqual(second_stop["decision"], "block")
+
+            invoke_lifecycle_hook(state_dir, consent_tool_event(True, grant=True))
+            keywords_only = invoke_lifecycle_hook(
+                state_dir,
+                {
+                    "hook_event_name": "Stop",
+                    "stop_hook_active": True,
+                    "last_assistant_message": (
+                        "usage recorded; solution candidate; server gap; knowledge closeout"
+                    ),
+                },
+            )
+            self.assertEqual(keywords_only["decision"], "block")
+
+            state = json.loads(
+                (state_dir / "jl_lifecycle.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                set(state),
+                {
+                    "version",
+                    "jl_task_active",
+                    "consent_checked",
+                    "consent_granted",
+                    "agreement_reply_seen",
+                    "queried_task_hash",
+                    "knowledge_outcome",
+                },
+            )
+            self.assertTrue(state["consent_granted"])
+            self.assertIsNone(state["knowledge_outcome"])
+            self.assertNotIn("帮我修复", json.dumps(state, ensure_ascii=False))
+
+    def test_hook_records_successful_query_result_without_retaining_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state_dir = Path(temporary)
+            invoke_lifecycle_hook(
+                state_dir,
+                {"hook_event_name": "UserPromptSubmit", "prompt": "排查 AC701N ANC 切换问题"},
+            )
+            invoke_lifecycle_hook(state_dir, consent_tool_event(True))
+
+            task_id = "task-private-value-must-not-be-stored"
+            private_fragment_text = "private fragment text must not be stored"
+            invoke_lifecycle_hook(
+                state_dir,
+                {
+                    "hook_event_name": "PostToolUse",
+                    "tool_name": "mcp__jl-private-knowledge__query_task_fragments",
+                    "tool_input": {"task_id": task_id, "query": "ANC mode decision"},
+                    "tool_response": {
+                        "isError": False,
+                        "structuredContent": {
+                            "gateway_version": "knowledge-v1",
+                            "task": {"task_id": task_id},
+                            "fragments": [
+                                {"fragment_id": "opaque", "summary": private_fragment_text}
+                            ],
+                        },
+                    },
+                },
+            )
+            closed = invoke_lifecycle_hook(
+                state_dir,
+                {"hook_event_name": "Stop", "last_assistant_message": "已完成当前工作。"},
+            )
+            self.assertNotIn("decision", closed)
+
+            state_text = (state_dir / "jl_lifecycle.json").read_text(encoding="utf-8")
+            state = json.loads(state_text)
+            self.assertEqual(state["knowledge_outcome"], "usage_recorded")
+            self.assertFalse(state["jl_task_active"])
+            self.assertEqual(len(state["queried_task_hash"]), 64)
+            self.assertNotIn(task_id, state_text)
+            self.assertNotIn(private_fragment_text, state_text)
+
+    def test_hook_reuses_one_time_consent_for_a_later_natural_language_task(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state_dir = Path(temporary)
+            invoke_lifecycle_hook(
+                state_dir,
+                {"hook_event_name": "UserPromptSubmit", "prompt": "排查 AC701N ANC 切换问题"},
+            )
+            invoke_lifecycle_hook(state_dir, consent_tool_event(True, grant=True))
+            first_task_id = "first-task"
+            invoke_lifecycle_hook(
+                state_dir,
+                {
+                    "hook_event_name": "PostToolUse",
+                    "tool_name": "mcp__server__query_task_fragments",
+                    "tool_input": {"task_id": first_task_id},
+                    "tool_response": {
+                        "structuredContent": {
+                            "task": {"task_id": first_task_id},
+                            "fragments": [],
+                        }
+                    },
+                },
+            )
+            self.assertNotIn(
+                "decision",
+                invoke_lifecycle_hook(state_dir, {"hook_event_name": "Stop"}),
+            )
+
+            second_prompt = invoke_lifecycle_hook(
+                state_dir,
+                {
+                    "hook_event_name": "UserPromptSubmit",
+                    "prompt": "再帮我处理杰理耳机通透模式底噪",
+                },
+            )
+            self.assertIn(
+                "never ask for a $Skill name",
+                second_prompt["hookSpecificOutput"]["additionalContext"],
+            )
+            invoke_lifecycle_hook(state_dir, consent_tool_event(True))
+            state = json.loads(
+                (state_dir / "jl_lifecycle.json").read_text(encoding="utf-8")
+            )
+            self.assertTrue(state["consent_granted"])
+            self.assertFalse(state["agreement_reply_seen"])
+            self.assertIsNone(state["knowledge_outcome"])
+
+    def test_hook_does_not_reuse_an_outcome_from_a_different_server_task(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state_dir = Path(temporary)
+            state_path = state_dir / "jl_lifecycle.json"
+            invoke_lifecycle_hook(
+                state_dir,
+                {"hook_event_name": "UserPromptSubmit", "prompt": "排查杰理 TWS 配对问题"},
+            )
+            invoke_lifecycle_hook(state_dir, consent_tool_event(True))
+            for task_id, fragments in (
+                ("first-task", [{"fragment_id": "one"}]),
+                ("second-task", []),
+            ):
+                invoke_lifecycle_hook(
+                    state_dir,
+                    {
+                        "hook_event_name": "PostToolUse",
+                        "tool_name": "mcp__server__query_task_fragments",
+                        "tool_input": {"task_id": task_id},
+                        "tool_response": {
+                            "structuredContent": {
+                                "task": {"task_id": task_id},
+                                "fragments": fragments,
+                            }
+                        },
+                    },
+                )
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            self.assertEqual(state["knowledge_outcome"], "server_gap")
+            self.assertEqual(
+                state["queried_task_hash"],
+                hashlib.sha256(b"second-task").hexdigest(),
+            )
+
+    def test_hook_no_hit_becomes_gap_and_queued_solution_replaces_it(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state_dir = Path(temporary)
+            state_path = state_dir / "jl_lifecycle.json"
+            invoke_lifecycle_hook(
+                state_dir,
+                {"hook_event_name": "UserPromptSubmit", "prompt": "帮我查杰理 TWS ANC 异常"},
+            )
+            invoke_lifecycle_hook(state_dir, consent_tool_event(True))
+            task_id = "current-task-id"
+            invoke_lifecycle_hook(
+                state_dir,
+                {
+                    "hook_event_name": "PostToolUse",
+                    "tool_name": "mcp__server__query_task_fragments",
+                    "tool_input": {"task_id": task_id, "query": "specific ANC failure"},
+                    "tool_response": {
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": json.dumps(
+                                    {
+                                        "gateway_version": "knowledge-v1",
+                                        "task": {"task_id": task_id},
+                                        "fragments": [],
+                                    }
+                                ),
+                            }
+                        ]
+                    },
+                },
+            )
+            self.assertEqual(
+                json.loads(state_path.read_text(encoding="utf-8"))["knowledge_outcome"],
+                "server_gap",
+            )
+
+            candidate = {"candidate_kind": "solution"}
+            invoke_lifecycle_hook(
+                state_dir,
+                {
+                    "hook_event_name": "PostToolUse",
+                    "tool_name": "mcp__server__submit_knowledge_candidate",
+                    "tool_input": {"task_id": "different-task", "candidate": candidate},
+                    "tool_response": {
+                        "structuredContent": {
+                            "task_id": "different-task",
+                            "status": "queued_for_review",
+                        }
+                    },
+                },
+            )
+            self.assertEqual(
+                json.loads(state_path.read_text(encoding="utf-8"))["knowledge_outcome"],
+                "server_gap",
+            )
+            for status, expected in (
+                ("withdrawn", "server_gap"),
+                ("queued_for_review", "solution_candidate"),
+            ):
+                invoke_lifecycle_hook(
+                    state_dir,
+                    {
+                        "hook_event_name": "PostToolUse",
+                        "tool_name": "mcp__server__submit_knowledge_candidate",
+                        "tool_input": {"task_id": task_id, "candidate": candidate},
+                        "tool_response": {
+                            "structuredContent": {"task_id": task_id, "status": status}
+                        },
+                    },
+                )
+                self.assertEqual(
+                    json.loads(state_path.read_text(encoding="utf-8"))[
+                        "knowledge_outcome"
+                    ],
+                    expected,
+                )
+
+            closed = invoke_lifecycle_hook(
+                state_dir, {"hook_event_name": "Stop", "stop_hook_active": True}
+            )
+            self.assertNotIn("decision", closed)
+
+    def test_hook_rejects_failed_malformed_and_cross_task_tool_results(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state_dir = Path(temporary)
+            invoke_lifecycle_hook(
+                state_dir,
+                {"hook_event_name": "UserPromptSubmit", "prompt": "排查杰理 SDK 问题"},
+            )
+            invoke_lifecycle_hook(state_dir, consent_tool_event(True))
+            for response in (
+                {"isError": True, "structuredContent": {"fragments": []}},
+                {"structuredContent": {"ok": False, "fragments": []}},
+                {"structuredContent": {"task": {"task_id": "other"}, "fragments": []}},
+            ):
+                invoke_lifecycle_hook(
+                    state_dir,
+                    {
+                        "hook_event_name": "PostToolUse",
+                        "tool_name": "mcp__server__query_task_fragments",
+                        "tool_input": {"task_id": "expected"},
+                        "tool_response": response,
+                    },
+                )
+            first_stop = invoke_lifecycle_hook(state_dir, {"hook_event_name": "Stop"})
+            second_stop = invoke_lifecycle_hook(
+                state_dir, {"hook_event_name": "Stop", "stop_hook_active": True}
+            )
+            self.assertEqual(first_stop["decision"], "block")
+            self.assertEqual(second_stop["decision"], "block")
+            state = json.loads(
+                (state_dir / "jl_lifecycle.json").read_text(encoding="utf-8")
+            )
+            self.assertIsNone(state["knowledge_outcome"])
+
 
 class OutboxTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -354,11 +748,20 @@ class OutboxTests(unittest.TestCase):
         candidate: dict[str, object] | None = None,
         expected_code: int = 0,
     ) -> dict[str, object]:
-        command = [sys.executable, str(OUTBOX), "--state-dir", str(self.state_dir), *arguments]
+        command = [
+            sys.executable,
+            "-X",
+            "utf8",
+            str(OUTBOX),
+            "--state-dir",
+            str(self.state_dir),
+            *arguments,
+        ]
         result = subprocess.run(
             command,
             input=json.dumps(candidate, ensure_ascii=False) if candidate is not None else None,
             text=True,
+            encoding="utf-8",
             capture_output=True,
             check=False,
         )

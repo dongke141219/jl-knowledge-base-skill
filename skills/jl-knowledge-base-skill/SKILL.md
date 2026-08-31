@@ -1,11 +1,23 @@
 ---
 name: jl-knowledge-base-skill
-description: After required one-time user agreement, query a configured JL SDK knowledge gateway for a few task-scoped, evidence-labelled fragments and automatically contribute sanitized candidate experience or knowledge gaps from substantive Jieli SDK work. Never use it to browse, export, or reconstruct the corpus.
+description: "Handle natural-language Jieli (JL) SDK implementation and diagnosis end to end: exact one-time consent, scoped shared guidance, local engineering, real-build evidence, and mandatory sanitized closeout. Never browse or reconstruct the corpus."
 ---
 
 # JL Knowledge Base Skill
 
-Use the private gateway as supporting evidence for a concrete JL SDK task. The public Codex, Gemini CLI, and ZCode package contains no private knowledge, endpoint credentials, customer data, or writable access to the verified corpus.
+This is the only visible JL workflow. A user can naturally ask a JL/Jieli SDK question; do not require a `$` Skill name, fixed command, or repeated chip model. The public Codex, Gemini CLI, and ZCode package contains no private knowledge, endpoint credentials, customer data, or writable access to the verified corpus.
+
+## Unified main workflow
+
+For every concrete JL task, complete this order without handing the user to a second public Skill:
+
+1. Read local instructions and inspect the authorized project before editing. Infer product, chip, SDK version, board, requested behavior, configuration ownership, and build entry from the project where possible. Ask one short plain-language question only when the project and request cannot provide enough scope.
+2. Apply the exact one-time consent gate below before any shared call. After current consent, create one narrow server task and query only the few formal fragments that affect a real decision. Every gateway tool call includes `client_version: "0.7.0"`.
+3. Trace the local implementation and make the smallest complete change. Respect existing feature gates, board definitions, and Makefile/build scripts. Never invent or fetch a signing KEY, private library, partner asset, credential, or protocol package; never commit, quote, or upload any such material.
+4. Run the real project build when the environment permits. Report E1 for inspected/implemented work without a target build, E2 for a passing real build pending hardware, and E3 only for scenario-correct hardware confirmation. A static check or successful build is not hardware proof.
+5. Finish with the mandatory evidence-backed one-outcome knowledge closeout below. The bundled Codex hook accepts only the current MCP tool's successful structured result; answer wording, a local queue entry, or a previous task cannot satisfy it. The companion files and hooks only support this main workflow; they are not a user-facing alternate entry.
+
+Project source, a real build, and correct hardware evidence override a conflicting fragment. Preserve each fragment's evidence level, scope, and limitation as `[K:<fragment-id>][E1|E2|E3][scope:<applicability>]`; never persist or republish it.
 
 ## Required one-time access and contribution agreement
 
@@ -13,9 +25,9 @@ Before **any** `create_knowledge_task`, `query_task_fragments`, or `submit_knowl
 
 > ### ⚠️ 首次使用确认
 >
-> 使用本共享知识库，需要同意参加“知识共同成长计划”：系统会把任务中形成的可复用经验，整理成脱敏知识候选并上传审核。大家一起贡献，知识库才能越来越全面，后续解决问题也会更快。
+> 使用本共享知识库，需要同意参加“知识共同成长计划”：系统会把任务中形成的可复用经验，整理成脱敏知识候选并上传审核。这个唯一知识库不只收问题点，也包括能实现的功能、工程实现指南、产品/芯片/SDK 适用范围、边界、问题解法以及编译/实机证据。大家一起贡献，知识库才能越来越全面，后续解决问题也会更快。
 >
-> 不会上传完整源码、SDK、原理图、UI 文档、固件、原始日志、密码、密钥或客户身份信息。新内容会先进入候选知识库，审核通过后才会提供给其他用户。
+> 不会上传完整源码、SDK、原理图、UI 文档、固件、原始日志、密码、密钥或客户身份信息。新内容会先进入同一个知识库内的候选区，审核通过并进入正式区后才会提供给其他用户。
 >
 > 如同意，请输入：**同意**
 > 未输入“同意”，不能访问共享知识库。
@@ -26,9 +38,9 @@ Current consent covers both task-scoped knowledge access and automatic contribut
 
 ## Query task-scoped knowledge
 
-1. Inspect the current project evidence first. Query only when JL-specific prior knowledge would change a real implementation or verification decision.
-2. Infer product, chip, SDK version, board, and requested behavior from the current authorized project before asking the user to repeat them. If neither project evidence nor the user's message provides enough scope, ask one short plain-language clarification. Then call `create_knowledge_task` with one narrow, sanitized task description, `contribution_consent: "同意"`, and `contribution_consent_version: "2026-08-31-v2"`. Keep its returned `task_id` only for this task; never invent an ID, reuse it for another task or customer, or persist it as knowledge. Treat the returned `candidate_taxonomy` as the only valid product/domain classification for later contributions.
-3. Call `query_task_fragments` with that server-issued `task_id`, `include_incubator: false`, the decision to make, observed behavior, and already-known evidence. Remove credentials, customer identity, private paths, complete source files, and unrelated logs. Only administrator-reviewed formal shared knowledge may be returned; candidate-library items and knowledge gaps are not query results.
+1. Inspect the current project evidence first. Query only when JL-specific prior knowledge would change a real implementation or verification decision. A concrete question such as “can this feature be implemented on this chip/SDK, and how?” is a valid narrow query: request the matching capability and engineering-guide fragments for that scope, never an inventory of everything the knowledge base contains.
+2. Infer product, chip, SDK version, board, and requested behavior from the current authorized project before asking the user to repeat them. If neither project evidence nor the user's message provides enough scope, ask one short plain-language clarification. Then call `create_knowledge_task` with one narrow, sanitized task description, `contribution_consent: "同意"`, `contribution_consent_version: "2026-08-31-v2"`, and `client_version: "0.7.0"`. Keep its returned `task_id` only for this task; never invent an ID, reuse it for another task or customer, or persist it as knowledge. Treat the returned `candidate_taxonomy` as the only valid product/domain classification for later contributions.
+3. Call `query_task_fragments` with that server-issued `task_id`, `include_incubator: false`, `client_version: "0.7.0"`, the decision to make, observed behavior, and already-known evidence. Remove credentials, customer identity, private paths, complete source files, and unrelated logs. Only administrator-reviewed content from the formal area of the one shared knowledge base may be returned; items in its candidate area and knowledge gaps are not query results.
 4. Request only the few fragments needed for that decision. Never send an empty or wildcard query; request an inventory, identifier range, pagination cursor, corpus statistics, bulk result, source document, or export; or chain queries to reconstruct the corpus.
 5. Use a follow-up query only for a named unresolved decision and the same `task_id`. Stop when the task has enough evidence.
 6. Preserve the evidence label and applicability of every fragment used. Cite it as `[K:<fragment-id>][E1|E2|E3][scope:<applicability>]` and state caveats. Project source, a real build, and scenario-correct hardware results take precedence over a conflicting fragment.
@@ -49,19 +61,19 @@ Contribution is outbox-first and best effort:
 
 1. At task start, opportunistically process up to three due outbox entries. Use the anonymous public MCP connection only while the operator's global service switch is enabled; never run or contact the knowledge owner's AI coding client.
 2. Finish the user's actual engineering work first. If the work produced a concrete reusable finding, derive the smallest `product -> domain -> capability -> subfeature -> boundary -> issue` chain from evidence created in this task, not from private fragments returned by the gateway, and set `candidate_kind: solution`.
-3. If a narrow query returned no relevant fragment and the task still ended without a reliable reusable answer, create one `candidate_kind: knowledge_gap` issue record describing only the missing product/chip/SDK/function scope and the unanswered decision. Never turn a guess or failed attempt into a solution candidate. A knowledge gap is visible to administrators for future work and can never be served as an answer or merged as formal knowledge.
+3. If a successful narrow query returned no relevant fragment, the server records that scoped miss as a knowledge gap. Do not invent a solution or submit a duplicate gap merely to satisfy the lifecycle hook. A gap is visible to administrators for future work and can never be served as an answer or merged as formal knowledge.
 4. Create separate stable-semantic candidates only when independent subfunctions deserve separate reuse. Keep every field short and structured. Strip source text, raw logs, customer/company names, email addresses, IPv4/IPv6 addresses, MAC addresses, hostnames, URLs, local or NAS paths, file archives, KEY material, credentials, tokens, private protocol payloads, and any returned private fragment text.
 5. Enqueue each candidate with the outbox helper before attempting the network call. Its canonical SHA-256 is the stable `idempotency_key`; the queue contains no `task_id`, endpoint, credential, source, or raw log.
-6. Call `submit_knowledge_candidate` with a consent-bound server-issued `task_id`, the candidate, and that `idempotency_key`. A queued item whose old task expired gets a new narrow task; never persist or reuse the old task ID.
-7. Delete the local item only when the server returns `status: queued_for_review`. This means the sanitized item is stored in the candidate library for internal review; it is not searchable by public users and is not part of the formal shared knowledge base.
-8. On offline, timeout, operator stop, or rate-limit failure, schedule the local item for bounded exponential retry and leave the engineering result successful. On privacy/schema/scope rejection, remove the unsafe item rather than retrying it unchanged. If the server returns `status: withdrawn` for a previously withdrawn identical hash, drop it as `server_withdrawn`; do not retry the same rejected knowledge forever. A genuinely corrected implementation must produce a changed candidate and a new idempotency hash.
+6. Call `submit_knowledge_candidate` with a consent-bound server-issued `task_id`, the candidate, that `idempotency_key`, and `client_version: "0.7.0"`. A queued item whose old task expired gets a new narrow task; never persist or reuse the old task ID.
+7. Delete the local item only when the server returns `status: queued_for_review`. This means the sanitized item is stored in the candidate area of the one shared knowledge base for internal review; it is not searchable by public users and has not entered the formal area.
+8. On offline, timeout, operator stop, or rate-limit failure, schedule the local item for bounded exponential retry and leave the engineering result intact. This local retry is not a successful closeout: a consented Codex task remains open until an actual task-scoped query succeeds, and a reusable solution remains `solution_candidate` only after the server returns `status: queued_for_review`. On privacy/schema/scope rejection, remove the unsafe item rather than retrying it unchanged. If the server returns `status: withdrawn` for a previously withdrawn identical hash, drop it as `server_withdrawn`; do not retry the same rejected knowledge forever. A genuinely corrected implementation must produce a changed candidate and a new idempotency hash.
 
 Lifecycle and evidence must match what actually happened:
 
 - A meaningful performed flow without real build PASS is `processed_pending_verification` / `E1`.
 - Real build PASS is `compiled_pending_hardware` / `E2`.
 - Explicit negative build or hardware evidence is `verified_failed` / `E1` or `E2`; silence is not failure.
-- Scenario-correct hardware PASS may be submitted as `verified_pass` / `E3`, but an external claim remains pending in the candidate library until internal review; never describe it as server-verified or immediately reusable.
+- Scenario-correct hardware PASS may be submitted as `verified_pass` / `E3`, but an external claim remains pending in the candidate area of the one shared knowledge base until internal review; never describe it as server-verified or immediately reusable.
 
 Every candidate must carry a server-controlled canonical `product_id` and `domain_id` before `capability_id`, `semantic_id`, and `parent_semantic_id`. The initial taxonomy is:
 
@@ -72,6 +84,16 @@ Do not invent spelling variants such as a singular product name or a generic `do
 
 Read [references/contribution-workflow.md](references/contribution-workflow.md) for the helper commands and retry handshake. Read [references/gateway-contract.md](references/gateway-contract.md) for MCP payloads and server controls.
 
+## Mandatory one-outcome closeout
+
+Every substantive JL task with current consent must reach exactly one of these states through the current task's actual successful MCP result before the final answer. The lifecycle state is one enum, so a later successful solution submission replaces the provisional query outcome instead of creating a second closeout. Merely writing any of these words in the answer does nothing:
+
+- **usage recorded**: the current task's successful `query_task_fragments` result contains at least one scoped formal fragment. This is the final state only when no reusable local solution is later queued.
+- **server gap**: the current task's successful `query_task_fragments` result contains an empty `fragments` list. The server records the scoped miss; do not fabricate or duplicate a gap candidate.
+- **solution candidate**: after the current task has queried, local work produced a concrete reusable finding and `submit_knowledge_candidate` for its sanitized `candidate_kind: solution` returned `status: queued_for_review`. This successful result replaces `usage_recorded` or `server_gap` as the single final state.
+
+Choose `solution candidate` over the query outcome when local evidence produced a reusable result. Failed, malformed, withdrawn, cross-task, or merely queued-locally operations do not count. The Codex `Stop` hook keeps blocking after current consent until one actual closeout exists, including after a previous continuation; there is no second-stop bypass. When consent is absent or revoked, shared knowledge stays unavailable and local-only SDK work may continue without pretending a shared closeout ran.
+
 ## Anonymous public and internal-token boundary
 
 The current user's already-running Codex, Gemini CLI, or ZCode session may summarize its own task into a candidate. The outbox helper performs only local JSON validation/storage, and the gateway performs only anonymous rate-limited lookup/deduplication/storage. Neither component starts an AI client, calls a model, has the owner's login, or spends the owner's AI usage. A GitHub or company user therefore uses their own AI account; only workloads deliberately run by the owner's web worker use the owner's configured account.
@@ -81,6 +103,6 @@ Public knowledge access requires no registration, login, application, per-user a
 ## Failure boundaries
 
 - If consent is absent, task creation fails, the operator has stopped public access, or the MCP dependency is unavailable, explain that shared knowledge was not queried and continue from local project evidence. Do not call create/query/submit before consent, and do not call query or submit without a consent-bound server-issued `task_id`.
-- A gateway or outbox outage must not block, fail, or roll back the JL engineering task. Preserve a privacy-checked candidate locally only when consent is current, then retry opportunistically on later invocations.
+- A gateway or outbox outage must not fail or roll back the JL engineering work. Preserve a privacy-checked candidate locally only when consent is current. For Codex, keep the current consented turn open until the real knowledge closeout succeeds; never convert an outage, a local retry entry, or answer text into a false success.
 - Do not bypass the public master switch, anonymous rate limits, task limits, or response budgets; do not fall back to direct NAS/file access or launch a remote model worker.
 - If a response appears to expose a corpus dump, private path, credential, or unrelated customer data, do not store, contribute, or reproduce it; report the gateway policy failure to the operator.

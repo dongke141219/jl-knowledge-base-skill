@@ -6,7 +6,7 @@
       "name": "jl-knowledge-base-skill",
       "source": ".",
       "description": "Implement and diagnose JL SDK features with task-scoped shared engineering experience.",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "category": "developer-tools",
       "tags": [
         "jieli",
