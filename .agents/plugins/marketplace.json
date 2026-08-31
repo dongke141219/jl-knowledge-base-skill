@@ -7,8 +7,9 @@
     {
       "name": "jl-knowledge-base-skill",
       "source": {
-        "source": "url",
+        "source": "git-subdir",
         "url": "https://github.com/dongke141219/jl-knowledge-base-skill.git",
+        "path": "plugins/codex-jl-knowledge-base-skill",
         "ref": "main"
       },
       "policy": {

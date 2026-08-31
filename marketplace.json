@@ -4,9 +4,9 @@
   "plugins": [
     {
       "name": "jl-knowledge-base-skill",
-      "source": ".",
+      "source": "./plugins/zcode-jl-knowledge-base-skill",
       "description": "Implement and diagnose JL SDK features with task-scoped shared engineering experience.",
-      "version": "0.7.0",
+      "version": "0.7.1",
       "category": "developer-tools",
       "tags": [
         "jieli",

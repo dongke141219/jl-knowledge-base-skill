@@ -1,0 +1,44 @@
+{
+  "description": "JL lifecycle checks for ZCode.",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "process",
+            "command": "node",
+            "args": ["${ZCODE_PLUGIN_ROOT}/hooks/python-launcher.mjs"],
+            "timeoutMs": 5000,
+            "statusMessage": "Preparing JL task workflow"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "process",
+            "command": "node",
+            "args": ["${ZCODE_PLUGIN_ROOT}/hooks/python-launcher.mjs"],
+            "timeoutMs": 5000,
+            "statusMessage": "Updating JL task lifecycle"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "process",
+            "command": "node",
+            "args": ["${ZCODE_PLUGIN_ROOT}/hooks/python-launcher.mjs"],
+            "timeoutMs": 5000,
+            "statusMessage": "Checking JL task closeout"
+          }
+        ]
+      }
+    ]
+  }
+}

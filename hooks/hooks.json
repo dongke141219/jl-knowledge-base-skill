@@ -1,43 +1,41 @@
 {
-  "description": "JL task lifecycle guardrails. Review and trust with /hooks before use.",
+  "description": "JL lifecycle checks for Gemini CLI.",
   "hooks": {
-    "UserPromptSubmit": [
+    "BeforeAgent": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$PLUGIN_ROOT/hooks/jl_lifecycle.py\"",
-            "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\run_jl_lifecycle.cmd\"\"",
-            "timeout": 5,
-            "statusMessage": "Preparing JL task workflow",
-            "additionalContextLimit": 800
+            "name": "JL task start",
+            "command": "node \"${extensionPath}${/}hooks${/}python-launcher.mjs\"",
+            "timeout": 5000,
+            "description": "Start or continue the JL task lifecycle."
           }
         ]
       }
     ],
-    "PostToolUse": [
+    "AfterTool": [
       {
-        "matcher": "^(Bash|mcp__.*__(query_task_fragments|submit_knowledge_candidate))$",
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$PLUGIN_ROOT/hooks/jl_lifecycle.py\"",
-            "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\run_jl_lifecycle.cmd\"\"",
-            "timeout": 5,
-            "statusMessage": "Updating JL task lifecycle"
+            "name": "JL task evidence",
+            "command": "node \"${extensionPath}${/}hooks${/}python-launcher.mjs\"",
+            "timeout": 5000,
+            "description": "Record structured consent, knowledge, edit, and build evidence."
           }
         ]
       }
     ],
-    "Stop": [
+    "AfterAgent": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$PLUGIN_ROOT/hooks/jl_lifecycle.py\"",
-            "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\run_jl_lifecycle.cmd\"\"",
-            "timeout": 5,
-            "statusMessage": "Checking JL task closeout"
+            "name": "JL task closeout",
+            "command": "node \"${extensionPath}${/}hooks${/}python-launcher.mjs\"",
+            "timeout": 5000,
+            "description": "Require a current evidence-backed knowledge closeout."
           }
         ]
       }
