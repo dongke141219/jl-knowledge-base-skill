@@ -71,11 +71,10 @@ Codex 桌面版自带的 `codex.exe` 不一定已经加入 Windows PATH。请打
 ### 方案 A：能正常访问 GitHub
 
 ```powershell
-$codexExe = Get-ChildItem "$env:LOCALAPPDATA\OpenAI\Codex\bin\*\codex.exe" -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
-if (-not $codexExe) { throw "没有找到 Codex 桌面版 codex.exe，请先安装或更新 Codex" }
-& "$codexExe" plugin marketplace add dongke141219/jl-knowledge-base-skill --ref main
-& "$codexExe" plugin add jl-knowledge-base-skill@jl-knowledge
-& "$codexExe" plugin list
+Set-Alias CodexDesktop ((Get-ChildItem (([Environment]::GetFolderPath('LocalApplicationData')) + '\OpenAI\Codex\bin\*\codex.exe') -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1).FullName)
+CodexDesktop plugin marketplace add dongke141219/jl-knowledge-base-skill --ref main
+CodexDesktop plugin add jl-knowledge-base-skill@jl-knowledge
+CodexDesktop plugin list
 ```
 
 ### 方案 B：中国大陆网络或 GitHub 连接被重置，改走 Gitee
@@ -83,12 +82,11 @@ if (-not $codexExe) { throw "没有找到 Codex 桌面版 codex.exe，请先安�
 下面的重定向只针对本插件的唯一仓库，不影响其他 GitHub 仓库。
 
 ```powershell
-$codexExe = Get-ChildItem "$env:LOCALAPPDATA\OpenAI\Codex\bin\*\codex.exe" -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
-if (-not $codexExe) { throw "没有找到 Codex 桌面版 codex.exe，请先安装或更新 Codex" }
+Set-Alias CodexDesktop ((Get-ChildItem (([Environment]::GetFolderPath('LocalApplicationData')) + '\OpenAI\Codex\bin\*\codex.exe') -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1).FullName)
 git config --global url."https://gitee.com/fofo123/jl-knowledge-base-skill.git".insteadOf "https://github.com/dongke141219/jl-knowledge-base-skill.git"
-& "$codexExe" plugin marketplace add https://gitee.com/fofo123/jl-knowledge-base-skill.git --ref main
-& "$codexExe" plugin add jl-knowledge-base-skill@jl-knowledge
-& "$codexExe" plugin list
+CodexDesktop plugin marketplace add https://gitee.com/fofo123/jl-knowledge-base-skill.git --ref main
+CodexDesktop plugin add jl-knowledge-base-skill@jl-knowledge
+CodexDesktop plugin list
 ```
 
 GitHub 和 Gitee 二选一，不要重复添加同名市场。
@@ -113,7 +111,7 @@ Added plugin `jl-knowledge-base-skill`
 ## Codex 常见报错直接处理
 
 - `codex 无法识别为 cmdlet`：桌面版 CLI 没有加入 PATH。不要直接输入 `codex`，重新完整执行上面的 PowerShell 代码块。
-- `管道元素中的 & 后面表达式生成无效对象`：当前 PowerShell 窗口里没有 `$codexExe`。通常是只复制了后几行或打开了新窗口；从第一行重新整段执行。
+- `CodexDesktop 无法识别为 cmdlet`：通常是只复制了后几行或打开了新 PowerShell 窗口；从第一行重新整段执行。
 - `RPC failed`、`curl 28`、`Connection was reset`、`10054`：GitHub 网络连接被重置，改用“方案 B：Gitee”。
 - `marketplace jl-knowledge is not configured` 或 `plugin ... was not found`：前面的市场添加已经失败，后面的安装不会自动成功；先重新添加市场，再安装插件。
 - `plugin list` 输出很多内容：这是正常的，直接在输出末尾查找 `jl-knowledge-base-skill@jl-knowledge` 和 `installed, enabled`。
@@ -124,18 +122,17 @@ Added plugin `jl-knowledge-base-skill`
 请在同一个 PowerShell 窗口整段执行：
 
 ```powershell
-$codexExe = Get-ChildItem "$env:LOCALAPPDATA\OpenAI\Codex\bin\*\codex.exe" -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
-if (-not $codexExe) { throw "没有找到 Codex 桌面版 codex.exe，请先安装或更新 Codex" }
-& "$codexExe" plugin marketplace upgrade jl-knowledge
-& "$codexExe" plugin add jl-knowledge-base-skill@jl-knowledge
-& "$codexExe" plugin list
+Set-Alias CodexDesktop ((Get-ChildItem (([Environment]::GetFolderPath('LocalApplicationData')) + '\OpenAI\Codex\bin\*\codex.exe') -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1).FullName)
+CodexDesktop plugin marketplace upgrade jl-knowledge
+CodexDesktop plugin add jl-knowledge-base-skill@jl-knowledge
+CodexDesktop plugin list
 ```
 
 如果旧包还叫 `jl-private-knowledge-client`，先执行：
 
 ```powershell
-& "$codexExe" plugin remove jl-private-knowledge-client@jl-knowledge
-& "$codexExe" plugin marketplace remove jl-knowledge
+CodexDesktop plugin remove jl-private-knowledge-client@jl-knowledge
+CodexDesktop plugin marketplace remove jl-knowledge
 ```
 
 然后按全新安装步骤重新安装。

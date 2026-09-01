@@ -460,15 +460,17 @@ class PublicBundleTests(unittest.TestCase):
 
         for phrase in (
             "Codex 全新安装：Windows 请整段复制",
-            '$codexExe = Get-ChildItem "$env:LOCALAPPDATA\\OpenAI\\Codex\\bin\\*\\codex.exe"',
+            "Set-Alias CodexDesktop",
+            "CodexDesktop plugin marketplace add",
             'git config --global url."https://gitee.com/fofo123/jl-knowledge-base-skill.git".insteadOf',
             "jl-knowledge-base-skill@jl-knowledge  installed, enabled  0.7.1",
-            "管道元素中的 & 后面表达式生成无效对象",
+            "CodexDesktop 无法识别为 cmdlet",
             "Connection was reset",
             "完全退出",
             "同意",
         ):
             self.assertIn(phrase, csdn_article)
+        self.assertNotIn("$", csdn_article)
 
         self.assertIn("匿名限流", privacy)
         self.assertIn("不要求注册、登录、申请、逐人批准或个人凭据", terms)
