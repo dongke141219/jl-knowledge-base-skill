@@ -63,29 +63,71 @@
 
 安装或升级后请完全退出客户端、重新打开并新建任务。Codex 用户第一次使用前还应打开 `/hooks`，核对并信任本插件的三个生命周期 hook。
 
-## Codex 全新安装
+## Codex 全新安装（Windows 请整段复制）
 
-GitHub：
+Codex 桌面版自带的 `codex.exe` 不一定已经加入 Windows `PATH`。请打开 **PowerShell**，从下面两套方案中选择一套，并把该代码块**从第一行到最后一行一次性复制到同一个窗口执行**。不要只复制中间两行；新开 PowerShell 后也必须重新执行第一行。
 
-```text
-codex plugin marketplace add dongke141219/jl-knowledge-base-skill --ref main
-codex plugin add jl-knowledge-base-skill@jl-knowledge
+### 方案 A：能正常访问 GitHub
+
+```powershell
+$codexExe = Get-ChildItem "$env:LOCALAPPDATA\OpenAI\Codex\bin\*\codex.exe" -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
+if (-not $codexExe) { throw "没有找到 Codex 桌面版 codex.exe，请先安装或更新 Codex" }
+& "$codexExe" plugin marketplace add dongke141219/jl-knowledge-base-skill --ref main
+& "$codexExe" plugin add jl-knowledge-base-skill@jl-knowledge
+& "$codexExe" plugin list
 ```
 
-Gitee：
+### 方案 B：中国大陆网络或 GitHub 连接被重置（推荐使用 Gitee）
 
-```text
-codex plugin marketplace add https://gitee.com/fofo123/jl-knowledge-base-skill.git --ref main
-codex plugin add jl-knowledge-base-skill@jl-knowledge
+这套命令会把本插件唯一的 GitHub 仓库地址重定向到内容一致的 Gitee 镜像，不影响其他 GitHub 仓库。
+
+```powershell
+$codexExe = Get-ChildItem "$env:LOCALAPPDATA\OpenAI\Codex\bin\*\codex.exe" -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
+if (-not $codexExe) { throw "没有找到 Codex 桌面版 codex.exe，请先安装或更新 Codex" }
+git config --global url."https://gitee.com/fofo123/jl-knowledge-base-skill.git".insteadOf "https://github.com/dongke141219/jl-knowledge-base-skill.git"
+& "$codexExe" plugin marketplace add https://gitee.com/fofo123/jl-knowledge-base-skill.git --ref main
+& "$codexExe" plugin add jl-knowledge-base-skill@jl-knowledge
+& "$codexExe" plugin list
 ```
 
 GitHub 和 Gitee 二选一，不要重复添加同名市场。
 
-### Codex 旧版本升级到最新版
+### 怎样判断 Codex 安装成功
+
+最后的插件列表必须出现下面这一行，版本号可以高于示例：
 
 ```text
-codex plugin marketplace upgrade jl-knowledge
-codex plugin add jl-knowledge-base-skill@jl-knowledge
+jl-knowledge-base-skill@jl-knowledge  installed, enabled  0.7.1
+```
+
+同时应看到：
+
+```text
+Added marketplace `jl-knowledge`
+Added plugin `jl-knowledge-base-skill`
+```
+
+看到成功行后，必须把 Codex 的所有窗口彻底退出，再重新打开并新建任务。第一次访问共享知识时，应显示共同成长说明并要求用户本人准确输入“同意”。
+
+### Codex 常见报错直接处理
+
+- `codex 无法识别为 cmdlet`：桌面版 CLI 没有加入 PATH。不要直接输入 `codex`，重新完整执行上面的 PowerShell 代码块。
+- `管道元素中的 & 后面表达式生成无效对象`：当前 PowerShell 窗口里没有 `$codexExe`。通常是只复制了后几行或打开了新窗口；从第一行重新整段执行。
+- `RPC failed`、`curl 28`、`Connection was reset`、`10054`：GitHub 网络连接被重置，改用“方案 B：Gitee”。
+- `marketplace jl-knowledge is not configured` 或 `plugin ... was not found`：前面的市场添加已经失败，后面的安装不会自动成功；先按对应方案重新添加市场，再安装插件。
+- `plugin list` 输出很多内容：这是正常的。直接在输出末尾查找 `jl-knowledge-base-skill@jl-knowledge` 和 `installed, enabled`。
+- 列表里仍显示 GitHub URL：这是插件清单记录的标准来源地址，不代表 Gitee 安装失败；只要状态为 `installed, enabled` 且存在本地安装目录即可。
+
+### Codex 旧版本升级到最新版
+
+请在同一个 PowerShell 窗口整段执行：
+
+```powershell
+$codexExe = Get-ChildItem "$env:LOCALAPPDATA\OpenAI\Codex\bin\*\codex.exe" -File | Sort-Object LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
+if (-not $codexExe) { throw "没有找到 Codex 桌面版 codex.exe，请先安装或更新 Codex" }
+& "$codexExe" plugin marketplace upgrade jl-knowledge
+& "$codexExe" plugin add jl-knowledge-base-skill@jl-knowledge
+& "$codexExe" plugin list
 ```
 
 如果旧包还叫 `jl-private-knowledge-client`：
