@@ -419,6 +419,7 @@ class PublicBundleTests(unittest.TestCase):
 
     def test_public_access_is_separate_from_customer_platform_and_internal_worker(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        csdn_article = (ROOT / "CSDN文章.md").read_text(encoding="utf-8")
         privacy = (ROOT / "PRIVACY.md").read_text(encoding="utf-8")
         terms = (ROOT / "TERMS.md").read_text(encoding="utf-8")
         skill = SKILL.read_text(encoding="utf-8")
@@ -456,6 +457,18 @@ class PublicBundleTests(unittest.TestCase):
             "`/hooks`",
         ):
             self.assertIn(phrase, readme)
+
+        for phrase in (
+            "Codex 全新安装：Windows 请整段复制",
+            '$codexExe = Get-ChildItem "$env:LOCALAPPDATA\\OpenAI\\Codex\\bin\\*\\codex.exe"',
+            'git config --global url."https://gitee.com/fofo123/jl-knowledge-base-skill.git".insteadOf',
+            "jl-knowledge-base-skill@jl-knowledge  installed, enabled  0.7.1",
+            "管道元素中的 & 后面表达式生成无效对象",
+            "Connection was reset",
+            "完全退出",
+            "同意",
+        ):
+            self.assertIn(phrase, csdn_article)
 
         self.assertIn("匿名限流", privacy)
         self.assertIn("不要求注册、登录、申请、逐人批准或个人凭据", terms)
