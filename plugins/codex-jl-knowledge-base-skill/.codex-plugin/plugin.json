@@ -1,6 +1,6 @@
 {
   "name": "jl-knowledge-base-skill",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "Turn JL SDK requirements, schematics, UI documents, and shared experience into verified project changes in Codex.",
   "author": {
     "name": "JL Firmware Platform Team",

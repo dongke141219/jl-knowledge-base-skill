@@ -14,15 +14,30 @@
         ]
       }
     ],
+    "BeforeTool": [
+      {
+        "matcher": "(?:create_knowledge_task|query_task_fragments|submit_knowledge_candidate|report_client_update)$",
+        "hooks": [
+          {
+            "type": "command",
+            "name": "JL bounded knowledge call",
+            "command": "node \"${extensionPath}${/}hooks${/}python-launcher.mjs\"",
+            "timeout": 5000,
+            "description": "Prevent duplicate task, query, and candidate calls."
+          }
+        ]
+      }
+    ],
     "AfterTool": [
       {
+        "matcher": "(?:run_shell_command|create_knowledge_task|query_task_fragments|submit_knowledge_candidate|report_client_update)$",
         "hooks": [
           {
             "type": "command",
             "name": "JL task evidence",
             "command": "node \"${extensionPath}${/}hooks${/}python-launcher.mjs\"",
             "timeout": 5000,
-            "description": "Record structured consent, knowledge, edit, and build evidence."
+            "description": "Record consent and bounded knowledge results."
           }
         ]
       }
@@ -35,7 +50,7 @@
             "name": "JL task closeout",
             "command": "node \"${extensionPath}${/}hooks${/}python-launcher.mjs\"",
             "timeout": 5000,
-            "description": "Require a current evidence-backed knowledge closeout."
+            "description": "Apply at most one closeout reminder."
           }
         ]
       }

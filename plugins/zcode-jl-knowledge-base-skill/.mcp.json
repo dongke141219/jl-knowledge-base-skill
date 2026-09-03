@@ -2,7 +2,7 @@
   "mcpServers": {
     "jl-knowledge-base": {
       "type": "http",
-      "url": "https://convicted-matthew-plates-scientific.trycloudflare.com/knowledge/mcp?client_version=0.7.1"
+      "url": "https://convicted-matthew-plates-scientific.trycloudflare.com/knowledge/mcp?client_version=0.8.0"
     }
   }
 }

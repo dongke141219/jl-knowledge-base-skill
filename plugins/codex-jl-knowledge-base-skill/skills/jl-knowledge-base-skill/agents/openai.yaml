@@ -1,13 +1,13 @@
 interface:
   display_name: "JL Knowledge Base Skill"
-  short_description: "Query scoped JL knowledge and contribute safely"
-  default_prompt: "自然语言处理当前 JL/Jieli SDK 任务：主入口先完成一次性同意、创建和查询受限知识任务，再执行本地工程工作，并以一次明确的知识收口结束；无需输入 Skill 名称。"
+  short_description: "Confirm JL projects, query once, contribute safely"
+  default_prompt: "自然语言处理当前工程任务：先从本地证据确认它属于 JL/Jieli，再按功能或问题分类并查询一次相关知识；正常完成工作后只评估一次是否产生新的可复用结论。"
 dependencies:
   tools:
     - type: "mcp"
       value: "jl-knowledge-base"
       description: "JL knowledge gateway with consent-bound tasks, scoped formal queries, and contribution to the shared knowledge base candidate area"
       transport: "streamable_http"
-      url: "https://convicted-matthew-plates-scientific.trycloudflare.com/knowledge/mcp?client_version=0.7.1"
+      url: "https://convicted-matthew-plates-scientific.trycloudflare.com/knowledge/mcp?client_version=0.8.0"
 policy:
   allow_implicit_invocation: true

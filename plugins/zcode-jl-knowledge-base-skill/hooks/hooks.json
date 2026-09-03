@@ -8,21 +8,33 @@
             "type": "process",
             "command": "node",
             "args": ["${ZCODE_PLUGIN_ROOT}/hooks/python-launcher.mjs"],
-            "timeoutMs": 5000,
-            "statusMessage": "Preparing JL task workflow"
+            "timeoutMs": 5000
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "(?:create_knowledge_task|query_task_fragments|submit_knowledge_candidate|report_client_update)$",
+        "hooks": [
+          {
+            "type": "process",
+            "command": "node",
+            "args": ["${ZCODE_PLUGIN_ROOT}/hooks/python-launcher.mjs"],
+            "timeoutMs": 5000
           }
         ]
       }
     ],
     "PostToolUse": [
       {
+        "matcher": "(?:Bash|Shell|exec_command|run_shell_command|create_knowledge_task|query_task_fragments|submit_knowledge_candidate|report_client_update)$",
         "hooks": [
           {
             "type": "process",
             "command": "node",
             "args": ["${ZCODE_PLUGIN_ROOT}/hooks/python-launcher.mjs"],
-            "timeoutMs": 5000,
-            "statusMessage": "Updating JL task lifecycle"
+            "timeoutMs": 5000
           }
         ]
       }
@@ -34,8 +46,7 @@
             "type": "process",
             "command": "node",
             "args": ["${ZCODE_PLUGIN_ROOT}/hooks/python-launcher.mjs"],
-            "timeoutMs": 5000,
-            "statusMessage": "Checking JL task closeout"
+            "timeoutMs": 5000
           }
         ]
       }

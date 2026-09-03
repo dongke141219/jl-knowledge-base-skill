@@ -1,6 +1,6 @@
 # JL Knowledge Base Skill
 
-> **v0.7.1：直接用自然语言提问即可。** 不需要输入任何固定 Skill 名称或命令前缀；第一次同意后，后续普通 JL SDK 问题直接说需求就能使用。
+> **v0.8.0：先确认工程，再分类、查一次、做完后评估一次。** 不需要输入固定 Skill 名称或关键词；只有本地证据确认属于 JL 的项目才进入共享知识流程。
 
 官方下载入口（内容一致，任选一个即可）：
 
@@ -21,7 +21,7 @@
 >
 > 未输入“同意”，不能访问共享知识库；仍可让自己的 AI 客户端处理本地 SDK。
 
-> **旧版 Skill 的共享知识访问已经暂停。** 请从 [GitHub](https://github.com/dongke141219/jl-knowledge-base-skill) 或 [Gitee](https://gitee.com/fofo123/jl-knowledge-base-skill) 升级到 v0.7.1，完全重启客户端并新建任务。离线旧包无法收到联网升级提示，但本地 SDK 检查、修改和编译不受影响。
+> **v0.7.1 暂时保持兼容。** 它访问共享服务时会收到 v0.8.0 升级提示，但因为旧包里没有升级器，这一次仍需按下文手工升级。v0.8.0 是第一版具备服务器版本核对和白名单自更新能力的客户端；离线旧包仍无法收到联网提示，本地 SDK 检查、修改和编译不受影响。
 
 ## 可以做什么
 
@@ -32,7 +32,9 @@
 - 处理按键、灯效、ANC/通透、麦克风、音频、电源充电、蓝牙/TWS、APP 对接、屏幕 UI 和构建配置等功能。
 - 排查问题原因，做最小且完整的修复，并在条件允许时运行工程原有 Makefile 或构建入口。
 - 清楚区分“已经修改”“真实编译通过”和“仍需实机验证”，避免把静态分析说成实机结论。
-- 查询“某功能能否在指定芯片和 SDK 上实现、从哪里接入、有哪些边界和验证步骤”。不要求用户每次手动填写芯片；客户端会先从当前工程识别，确实无法判断时才追问一个关键问题。
+- 查询“某功能能否在指定芯片和 SDK 上实现、从哪里接入、有哪些边界和验证步骤”。关键词只帮助理解问题，不用于证明项目厂商；客户端会先从当前工程的目录、构建入口、芯片族和配置文件名识别，证据模糊时只追问一次。
+
+确认后的固定流程是：先将需求分为“功能性需求”或“问题点”，再定位到产品、功能大项、能力、子功能/问题点与适用边界；随后只查询一次最相关的正式知识。命中且相关就作为参考，没有命中、不相关或服务不可用，AI 都会继续正常完成本地工作。
 
 示例：
 
@@ -49,9 +51,9 @@
 
 ## 为什么会越用越智能
 
-首次明确同意后，每个实质 JL 任务都会先查询与当前问题相关的正式知识。任务如果产生了可复用的实现、修复、诊断、编译结果或实机证据，客户端会整理一份小型、脱敏、结构化候选；候选经过审核后，才会进入同一个知识库的正式功能链供以后复用。
+首次明确同意后，每个已确认的实质 JL 任务最多查询一次与当前问题相关的正式知识。AI 先完成实际任务，结束时再评估一次：只有形成了新的、可复用且有本地证据支持的工程结论，才整理至多一份小型、脱敏、结构化候选；候选经过审核后，才会进入同一个知识库的正式功能链供以后复用。
 
-这不代表每句话都会新增一条知识：普通闲聊、重复内容、没有可靠结论的猜测不会冒充正式知识。纯查询任务可以记录本次命中或明确缺口；发生代码/配置修改、真实构建或形成可复用结论后，则必须提交与最新成果对应的脱敏候选。这样才能让增长有内容、有范围、有证据，而不是简单堆积回答文字。
+这不代表每句话或每次修改都会新增知识：普通闲聊、重复内容、没有可靠结论的猜测、共享知识片段原文都不会上传。同一结论会按规范化哈希去重；服务暂时失败只保留一份本地脱敏候选，不会卡住回答、循环重试或要求再次收口。
 
 知识更完整后，相似任务可能少走弯路、减少重复搜索和反复解释，从而更快完成，也可能节省 AI Token；实际效果仍取决于当前工程、芯片、SDK、模型和资料完整度。
 
@@ -61,7 +63,17 @@
 - 本机可执行 Python 3.10 或更高版本。Windows 可使用 `py -3`、`python` 或 `python3` 中任意一个有效命令；macOS/Linux 通常使用 `python3` 或 `python`。
 - 只在自己有权使用的 SDK 和项目中工作。
 
-安装或升级后请完全退出客户端、重新打开并新建任务。Codex 用户第一次使用前还应打开 `/hooks`，核对并信任本插件的三个生命周期 hook。
+安装或升级后请完全退出客户端、重新打开并新建任务。Codex 用户第一次使用前还应打开 `/hooks`，核对并信任本插件的四类生命周期 hook。
+
+### 服务器版本核对与后续自动升级
+
+v0.8.0 起，每次正常访问共享知识服务时，服务器都会同时返回最低兼容版本和最新版本。发现新版本后，AI 只能调用当前安装包内的 `scripts/client_update.py` 固定升级流程；服务器只给出版本号和固定动作编号，不能下发 PowerShell、Shell、路径、URL 或脚本正文让客户端执行。用户明确要求不自动升级时，AI 必须停止自动升级并只提示人工步骤。
+
+- Codex：固定刷新已经配置的 `jl-knowledge` 市场、重装同名插件并用 JSON 列表核对版本。
+- Gemini CLI：固定更新 `jl-knowledge-base-skill` 扩展并读取已安装 manifest 核对版本。
+- ZCode：目前没有稳定的白名单命令行更新入口，因此只反馈“需要人工更新”，不会猜测或远程控制界面。
+
+升级器最多立即执行一次；Codex 市场刷新失败时可用本机已有市场快照再安装一次。结果只把客户端类型、升级前后版本、阶段、成功/失败和固定错误码回报服务器，不上传命令输出、路径、设备名、账号或身份。失败后六小时内不会重复执行；未知问题留给服务端统计和后续发布修复，不会让 AI 自己运行任意修复命令。安装成功也要在当前任务结束后完全重启客户端并新建任务才会生效。
 
 ## Codex 全新安装（Windows 请整段复制）
 
@@ -97,7 +109,7 @@ GitHub 和 Gitee 二选一，不要重复添加同名市场。
 最后的插件列表必须出现下面这一行，版本号可以高于示例：
 
 ```text
-jl-knowledge-base-skill@jl-knowledge  installed, enabled  0.7.1
+jl-knowledge-base-skill@jl-knowledge  installed, enabled  0.8.0
 ```
 
 同时应看到：
@@ -197,7 +209,7 @@ https://gitee.com/fofo123/jl-knowledge-base-skill.git
 
 ### ZCode 旧版本升级
 
-到 **设置 → 插件 → 市场源** 刷新 `jl-knowledge`，再到已安装插件检查更新；更新并启用后必须新建会话。可在 **设置 → Hooks** 确认本插件的三个 hook 已随插件启用。
+到 **设置 → 插件 → 市场源** 刷新 `jl-knowledge`，再到已安装插件检查更新；更新并启用后必须新建会话。可在 **设置 → Hooks** 确认本插件的四类 hook 已随插件启用。
 
 ## 支持范围与联系作者
 
@@ -211,7 +223,7 @@ https://gitee.com/fofo123/jl-knowledge-base-skill.git
 
 ## English quick start
 
-JL Knowledge Base Skill supports natural-language JL SDK implementation and diagnosis in Codex, Gemini CLI, and ZCode. No customer-platform registration, login, application, approval, or individual credential is required. On first shared use, the user must personally type the exact Chinese phrase `同意`; afterwards, normal JL questions can use the shared workflow without repeating a Skill name.
+JL Knowledge Base Skill supports natural-language JL SDK implementation and diagnosis in Codex, Gemini CLI, and ZCode. It first confirms the current project from bounded local JL signatures; keywords alone do not activate shared access. It then classifies the feature or issue, performs at most one scoped query, finishes normal engineering work even on a miss or outage, and assesses once whether a genuinely new reusable local result should be contributed. No customer-platform registration, login, application, approval, or individual credential is required. On first shared use, the user must personally type the exact Chinese phrase `同意`.
 
 The one shared knowledge base covers implementable capabilities, engineering implementation guides, product/chip/SDK applicability, boundaries, issue resolutions, and real build or hardware evidence. Sanitized reusable findings enter the candidate area of that same knowledge base and become searchable only after review. Complete source, SDKs, schematics, UI documents, firmware, raw logs, secrets, and identities are not uploaded.
 

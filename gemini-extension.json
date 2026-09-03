@@ -1,16 +1,17 @@
 {
   "name": "jl-knowledge-base-skill",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "Implement and diagnose Jieli SDK features in Gemini CLI with task-scoped shared engineering experience.",
   "contextFileName": "GEMINI.md",
   "mcpServers": {
     "jl-knowledge-base": {
-      "httpUrl": "https://convicted-matthew-plates-scientific.trycloudflare.com/knowledge/mcp?client_version=0.7.1",
+      "httpUrl": "https://convicted-matthew-plates-scientific.trycloudflare.com/knowledge/mcp?client_version=0.8.0",
       "timeout": 30000,
       "includeTools": [
         "create_knowledge_task",
         "query_task_fragments",
-        "submit_knowledge_candidate"
+        "submit_knowledge_candidate",
+        "report_client_update"
       ]
     }
   }

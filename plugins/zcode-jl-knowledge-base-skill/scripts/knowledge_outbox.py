@@ -30,6 +30,7 @@ REVOCATION_PHRASE = "REVOKE_AND_DELETE_PENDING_CONTRIBUTIONS"
 SANITIZATION_ACK = "STRUCTURED_ONLY_NO_SOURCE_LOG_IDENTITY_PATH_KEY_OR_CREDENTIAL"
 MAX_CANDIDATE_BYTES = 12 * 1024
 MAX_QUEUE_ENTRIES = 1000
+MAX_UPLOADED_RECEIPTS = 128
 RETENTION_DAYS = 30
 
 ALLOWED_NODE_TYPES = {
@@ -300,6 +301,20 @@ def _has_current_consent(root: Path) -> bool:
     )
 
 
+def _uploaded_candidate_ids(consent: dict[str, Any] | None) -> list[str]:
+    if not consent:
+        return []
+    value = consent.get("uploaded_candidate_ids", [])
+    if (
+        not isinstance(value, list)
+        or len(value) > MAX_UPLOADED_RECEIPTS
+        or len(set(value)) != len(value)
+        or not all(isinstance(item, str) and ENTRY_ID_RE.fullmatch(item) for item in value)
+    ):
+        raise OutboxError("Local uploaded-candidate receipt history is invalid.")
+    return list(value)
+
+
 def _require_consent(root: Path) -> None:
     if not _has_current_consent(root):
         raise OutboxError("Consent required: shared-knowledge access needs the user's one-time 同意 agreement.")
@@ -555,6 +570,7 @@ def command_status(root: Path, _args: argparse.Namespace) -> dict[str, Any]:
             "automatic_mode": "outbox_first_best_effort_mcp_submit",
             "pending_count": len(paths),
             "ready_count": ready,
+            "uploaded_receipt_count": len(_uploaded_candidate_ids(consent)),
             "expired_purged": purged,
             "network_or_model_calls": False,
         }
@@ -565,6 +581,7 @@ def command_grant(root: Path, args: argparse.Namespace) -> dict[str, Any]:
         raise OutboxError("The user must enter the exact one-time agreement phrase: 同意")
     with _state_lock(root):
         previous = _load_consent(root) or {}
+        uploaded_candidate_ids = _uploaded_candidate_ids(previous)
         payload = {
             "schema_version": SCHEMA_VERSION,
             "disclosure_version": DISCLOSURE_VERSION,
@@ -572,6 +589,7 @@ def command_grant(root: Path, args: argparse.Namespace) -> dict[str, Any]:
             "granted_at": _utc_text(),
             "mode": "shared_access_and_automatic_sanitized_candidates",
             "stats": previous.get("stats", {}),
+            "uploaded_candidate_ids": uploaded_candidate_ids,
         }
         _atomic_write_json(_consent_path(root), payload)
     return {
@@ -609,10 +627,25 @@ def command_enqueue(root: Path, args: argparse.Namespace) -> dict[str, Any]:
     with _state_lock(root):
         _require_consent(root)
         _purge_expired(root)
+        consent = _load_consent(root)
         path = _entry_path(root, entry_id)
+        if entry_id in _uploaded_candidate_ids(consent):
+            return {
+                "id": entry_id,
+                "idempotency_key": entry_id,
+                "queued": False,
+                "duplicate": True,
+                "already_uploaded": True,
+            }
         if path.exists():
             _load_entry(path)
-            return {"id": entry_id, "idempotency_key": entry_id, "queued": True, "duplicate": True}
+            return {
+                "id": entry_id,
+                "idempotency_key": entry_id,
+                "queued": True,
+                "duplicate": True,
+                "already_uploaded": False,
+            }
         if len(_entry_paths(root)) >= MAX_QUEUE_ENTRIES:
             raise OutboxError("Local contribution outbox is full; no candidate was stored.")
         now = _utc_text()
@@ -628,15 +661,13 @@ def command_enqueue(root: Path, args: argparse.Namespace) -> dict[str, Any]:
         }
         _atomic_write_json(path, payload)
         _update_stats(root, "queued_count")
-    return {"id": entry_id, "idempotency_key": entry_id, "queued": True, "duplicate": False}
-
-
-def command_mark_outcome(root: Path, args: argparse.Namespace) -> dict[str, Any]:
-    """Return a consent-backed structured marker without storing task content."""
-
-    with _state_lock(root):
-        _require_consent(root)
-    return {"outcome_marker": args.outcome_marker}
+    return {
+        "id": entry_id,
+        "idempotency_key": entry_id,
+        "queued": True,
+        "duplicate": False,
+        "already_uploaded": False,
+    }
 
 
 def command_ready(root: Path, args: argparse.Namespace) -> dict[str, Any]:
@@ -663,6 +694,15 @@ def command_ack(root: Path, args: argparse.Namespace) -> dict[str, Any]:
         existed = path.exists()
         if existed:
             _load_entry(path)
+            consent = _load_consent(root)
+            uploaded_candidate_ids = _uploaded_candidate_ids(consent)
+            if args.id not in uploaded_candidate_ids:
+                uploaded_candidate_ids.append(args.id)
+                uploaded_candidate_ids = uploaded_candidate_ids[-MAX_UPLOADED_RECEIPTS:]
+                if consent is None:
+                    raise OutboxError("Consent required before acknowledging an uploaded candidate.")
+                consent["uploaded_candidate_ids"] = uploaded_candidate_ids
+                _atomic_write_json(_consent_path(root), consent)
             path.unlink()
             _update_stats(root, "uploaded_count")
     return {"id": args.id, "acknowledged": existed}
@@ -724,16 +764,6 @@ def build_parser() -> argparse.ArgumentParser:
     enqueue.add_argument("--candidate-file", required=True, help="UTF-8 JSON file, or - for stdin")
     enqueue.add_argument("--sanitization-ack", required=True)
     enqueue.set_defaults(handler=command_enqueue)
-
-    mark_outcome = subparsers.add_parser("mark-outcome")
-    marker_group = mark_outcome.add_mutually_exclusive_group(required=True)
-    marker_group.add_argument(
-        "--reusable", dest="outcome_marker", action="store_const", const="reusable"
-    )
-    marker_group.add_argument(
-        "--none", dest="outcome_marker", action="store_const", const="none"
-    )
-    mark_outcome.set_defaults(handler=command_mark_outcome)
 
     ready = subparsers.add_parser("ready")
     ready.add_argument("--limit", type=int, default=3)

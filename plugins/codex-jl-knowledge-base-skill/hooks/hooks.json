@@ -9,21 +9,33 @@
             "command": "python3 \"$PLUGIN_ROOT/hooks/jl_lifecycle.py\" || python \"$PLUGIN_ROOT/hooks/jl_lifecycle.py\"",
             "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\run_jl_lifecycle.cmd\"\"",
             "timeout": 5,
-            "statusMessage": "Preparing JL task workflow",
             "additionalContextLimit": 800
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "(?:create_knowledge_task|query_task_fragments|submit_knowledge_candidate|report_client_update)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$PLUGIN_ROOT/hooks/jl_lifecycle.py\" || python \"$PLUGIN_ROOT/hooks/jl_lifecycle.py\"",
+            "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\run_jl_lifecycle.cmd\"\"",
+            "timeout": 5
           }
         ]
       }
     ],
     "PostToolUse": [
       {
+        "matcher": "(?:Bash|Shell|exec_command|run_shell_command|create_knowledge_task|query_task_fragments|submit_knowledge_candidate|report_client_update)$",
         "hooks": [
           {
             "type": "command",
             "command": "python3 \"$PLUGIN_ROOT/hooks/jl_lifecycle.py\" || python \"$PLUGIN_ROOT/hooks/jl_lifecycle.py\"",
             "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\run_jl_lifecycle.cmd\"\"",
-            "timeout": 5,
-            "statusMessage": "Updating JL task lifecycle"
+            "timeout": 5
           }
         ]
       }
@@ -35,8 +47,7 @@
             "type": "command",
             "command": "python3 \"$PLUGIN_ROOT/hooks/jl_lifecycle.py\" || python \"$PLUGIN_ROOT/hooks/jl_lifecycle.py\"",
             "commandWindows": "cmd.exe /d /c \"\"%PLUGIN_ROOT%\\hooks\\run_jl_lifecycle.cmd\"\"",
-            "timeout": 5,
-            "statusMessage": "Checking JL task closeout"
+            "timeout": 5
           }
         ]
       }
