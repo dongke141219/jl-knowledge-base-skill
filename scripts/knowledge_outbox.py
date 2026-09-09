@@ -451,10 +451,8 @@ def validate_candidate(candidate: Any) -> dict[str, Any]:
 
     product_id = _validate_classification_id(candidate["product_id"], "product_id", "product")
     domain_id = _validate_classification_id(candidate["domain_id"], "domain_id", "domain")
-    if product_id not in CANONICAL_PRODUCT_DOMAINS:
-        raise OutboxError("product_id is not in the server-controlled product taxonomy.")
-    if domain_id not in CANONICAL_PRODUCT_DOMAINS[product_id]:
-        raise OutboxError("domain_id is not valid for product_id in the server-controlled taxonomy.")
+    # The task-bound server identity is authoritative; new safe identifiers
+    # enter classification review instead of being rejected by a local list.
 
     normalized: dict[str, Any] = {
         "candidate_kind": candidate_kind,

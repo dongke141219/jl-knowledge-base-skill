@@ -51,7 +51,7 @@ Do not process old pending entries during ordinary question answering or read-on
 For each entry:
 
 1. Obtain a narrow server-issued task if the current JL task has no suitable live `task_id`. Do not save a task ID in the outbox.
-2. Call `submit_knowledge_candidate` with `task_id`, `candidate`, `client_version: "0.8.0"`, and `idempotency_key` equal to the outbox entry `id`.
+2. Call `submit_knowledge_candidate` with `task_id`, `candidate`, `client_version: "0.8.1"`, and `idempotency_key` equal to the outbox entry `id`.
 3. Only after `status: queued_for_review`, remove it:
 
 ```text
@@ -82,11 +82,11 @@ Synchronization retries are best effort and must never roll back, delay, or reop
 
 ## Bounded task closeout
 
-At the end of a confirmed JL task, keep one bounded outcome: a successful non-empty query is **usage recorded**; a successful empty query is **server gap**; a failed/malformed/unavailable call is **query unavailable**; no shared access is **local only**; and an accepted new reusable result is **solution candidate**. The candidate may replace the query outcome, but later reads, edits, builds, or answer wording do not create another required closeout. The hook may remind the model once if it omitted the consent check or one query, then it allows local completion. Every create, query, and submit payload includes `client_version: "0.8.0"`.
+At the end of a confirmed JL task, keep one bounded outcome: a successful non-empty query is **usage recorded**; a successful empty query is **server gap**; a failed/malformed/unavailable call is **query unavailable**; no shared access is **local only**; and an accepted new reusable result is **solution candidate**. The candidate may replace the query outcome, but later reads, edits, builds, or answer wording do not create another required closeout. The hook may remind the model once if it omitted the consent check or one query, then it allows local completion. Every create, query, and submit payload includes `client_version: "0.8.1"`.
 
 ## Candidate shape
 
-Use the exact `candidate` object from `gateway-contract.md`. This normal task workflow submits only `candidate_kind: solution` for a concrete new reusable local finding. A narrow query miss is already recorded as `server gap`; do not submit a duplicate gap candidate merely to complete the workflow. `product_id` and `domain_id` are mandatory server-controlled lowercase semantic IDs such as `product.tws-earbuds` and `domain.app-integration`. Use only a product/domain pair listed in `SKILL.md`; do not invent a spelling variant or new classification locally. They must describe a reusable product form and function domain, never a customer, company, project, account, repository, or directory. Relations, when present, contain only `type` and `target_semantic_id`; the allowed types are `contains`, `depends_on`, `extends`, `alternative`, and `supersedes`. Example:
+Use the exact `candidate` object from `gateway-contract.md`. This normal task workflow submits only `candidate_kind: solution` for a concrete new reusable local finding. A narrow query miss is already recorded as `server gap`; do not submit a duplicate gap candidate merely to complete the workflow. `product_id` and `domain_id` are mandatory lowercase semantic IDs such as `product.tws-earbuds` and `domain.app-integration`. Use the current task's server-issued product identity; unknown products are accepted for classification review. Reuse suggested domains where applicable; new safe domains enter review rather than being blocked by a client whitelist. They must describe a reusable product purpose and function domain, never a customer, company, project, account, repository, or directory. Relations, when present, contain only `type` and `target_semantic_id`; the allowed types are `contains`, `depends_on`, `extends`, `alternative`, and `supersedes`. Example:
 
 ```json
 {"type":"depends_on","target_semantic_id":"audio.anc"}

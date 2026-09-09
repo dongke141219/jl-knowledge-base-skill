@@ -8,6 +8,6 @@ dependencies:
       value: "jl-knowledge-base"
       description: "JL knowledge gateway with consent-bound tasks, scoped formal queries, and contribution to the shared knowledge base candidate area"
       transport: "streamable_http"
-      url: "https://convicted-matthew-plates-scientific.trycloudflare.com/knowledge/mcp?client_version=0.8.0"
+      url: "https://convicted-matthew-plates-scientific.trycloudflare.com/knowledge/mcp?client_version=0.8.1"
 policy:
   allow_implicit_invocation: true

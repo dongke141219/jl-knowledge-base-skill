@@ -36,7 +36,7 @@ HOOK_SCRIPT = CODEX_PACKAGE / "hooks" / "jl_lifecycle.py"
 HOOK_NODE_LAUNCHER = CODEX_PACKAGE / "hooks" / "python-launcher.mjs"
 HOOK_WINDOWS_LAUNCHER = CODEX_PACKAGE / "hooks" / "run_jl_lifecycle.cmd"
 CLIENT_UPDATER = CODEX_PACKAGE / "scripts" / "client_update.py"
-PUBLIC_MCP_URL = "https://convicted-matthew-plates-scientific.trycloudflare.com/knowledge/mcp?client_version=0.8.0"
+PUBLIC_MCP_URL = "https://convicted-matthew-plates-scientific.trycloudflare.com/knowledge/mcp?client_version=0.8.1"
 MCP_NAME = "jl-knowledge-base"
 CONSENT_PHRASE = "同意"
 REVOCATION_PHRASE = "REVOKE_AND_DELETE_PENDING_CONTRIBUTIONS"
@@ -199,7 +199,7 @@ class PublicBundleTests(unittest.TestCase):
     def test_manifest_is_distribution_ready(self) -> None:
         payload = json.loads(MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(payload["name"], "jl-knowledge-base-skill")
-        self.assertEqual(payload["version"], "0.8.0")
+        self.assertEqual(payload["version"], "0.8.1")
         self.assertEqual(payload["skills"], "./skills/")
         self.assertEqual(payload["mcpServers"], "./.mcp.json")
         self.assertNotIn("hooks", payload)
@@ -219,7 +219,7 @@ class PublicBundleTests(unittest.TestCase):
     def test_gemini_extension_is_distribution_ready(self) -> None:
         payload = json.loads(GEMINI_MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(payload["name"], "jl-knowledge-base-skill")
-        self.assertEqual(payload["version"], "0.8.0")
+        self.assertEqual(payload["version"], "0.8.1")
         self.assertEqual(payload["contextFileName"], "GEMINI.md")
         server = payload["mcpServers"][MCP_NAME]
         self.assertEqual(server["httpUrl"], PUBLIC_MCP_URL)
@@ -252,7 +252,7 @@ class PublicBundleTests(unittest.TestCase):
     def test_zcode_plugin_and_marketplace_are_distribution_ready(self) -> None:
         payload = json.loads(ZCODE_MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(payload["name"], "jl-knowledge-base-skill")
-        self.assertEqual(payload["version"], "0.8.0")
+        self.assertEqual(payload["version"], "0.8.1")
         self.assertEqual(
             payload["commands"],
             ["commands/jl-implement.md", "commands/jl-diagnose.md"],
@@ -320,7 +320,7 @@ class PublicBundleTests(unittest.TestCase):
         for field in (
             '"contribution_consent"',
             '"contribution_consent_version"',
-            '"client_version": "0.8.0"',
+            '"client_version": "0.8.1"',
             '"2026-08-31-v2"',
             '"purpose"',
             '"allowed_tools"',
@@ -427,7 +427,7 @@ class PublicBundleTests(unittest.TestCase):
         self.assertIn("Python 3.10", gemini)
         self.assertIn("Python 3.10", skill)
         self.assertIn("knowledge_outbox.py grant --accept 同意", gemini)
-        self.assertIn('client_version: "0.8.0"', gemini)
+        self.assertIn('client_version: "0.8.1"', gemini)
         self.assertIn("GitHub Issues", readme)
         self.assertIn("Gitee Issues", readme)
         self.assertIn("经作者完成适配的其他客户端", privacy)
@@ -451,7 +451,7 @@ class PublicBundleTests(unittest.TestCase):
             'plugin marketplace upgrade jl-knowledge',
             'plugin add jl-knowledge-base-skill@jl-knowledge',
             'git config --global url."https://gitee.com/fofo123/jl-knowledge-base-skill.git".insteadOf',
-            "jl-knowledge-base-skill@jl-knowledge  installed, enabled  0.8.0",
+            "jl-knowledge-base-skill@jl-knowledge  installed, enabled  0.8.1",
             "Connection was reset",
             "原理图",
             "UI 交互文档",
@@ -481,7 +481,7 @@ class PublicBundleTests(unittest.TestCase):
             "Set-Alias CodexDesktop",
             "CodexDesktop plugin marketplace add",
             'git config --global url."https://gitee.com/fofo123/jl-knowledge-base-skill.git".insteadOf',
-            "jl-knowledge-base-skill@jl-knowledge  installed, enabled  0.8.0",
+            "jl-knowledge-base-skill@jl-knowledge  installed, enabled  0.8.1",
             "CodexDesktop 无法识别为 cmdlet",
             "Connection was reset",
             "完全退出",
@@ -600,12 +600,12 @@ class PublicBundleTests(unittest.TestCase):
             invoke_lifecycle_hook(state_dir, consent_tool_event(True))
             create_event = create_tool_event("update-task")
             create_event["tool_response"]["structuredContent"]["client_update"] = {
-                "current_version": "0.8.0",
+                "current_version": "0.8.1",
                 "minimum_version": "0.7.1",
-                "latest_version": "0.8.1",
+                "latest_version": "0.8.2",
                 "update_available": True,
                 "required": False,
-                "automatic_update_supported_from": "0.8.0",
+                "automatic_update_supported_from": "0.8.1",
                 "automatic_update_eligible": True,
                 "action_id": "run_bundled_updater_v1",
                 "report_tool": "report_client_update",
@@ -617,12 +617,12 @@ class PublicBundleTests(unittest.TestCase):
                 notice["hookSpecificOutput"]["additionalContext"],
             )
             report = {
-                "client_version": "0.8.0",
+                "client_version": "0.8.1",
                 "attempt_id": "a" * 32,
                 "client_kind": "codex",
-                "from_version": "0.8.0",
-                "target_version": "0.8.1",
-                "observed_version": "0.8.1",
+                "from_version": "0.8.1",
+                "target_version": "0.8.2",
+                "observed_version": "0.8.2",
                 "action_id": "run_bundled_updater_v1",
                 "outcome": "success",
                 "stage": "verification",
@@ -635,7 +635,7 @@ class PublicBundleTests(unittest.TestCase):
                     "hook_event_name": "PostToolUse",
                     "tool_name": "exec_command",
                     "tool_input": {
-                        "cmd": "python scripts/client_update.py --client codex --target 0.8.1 "
+                        "cmd": "python scripts/client_update.py --client codex --target 0.8.2 "
                         "--action-id run_bundled_updater_v1"
                     },
                     "tool_response": {
@@ -667,7 +667,7 @@ class PublicBundleTests(unittest.TestCase):
             )
             self.assertEqual(duplicate["decision"], "block")
             state = json.loads(lifecycle_state_path(state_dir).read_text(encoding="utf-8"))
-            self.assertEqual(state["update_target_version"], "0.8.1")
+            self.assertEqual(state["update_target_version"], "0.8.2")
             self.assertTrue(state["update_prompted"])
             self.assertTrue(state["update_attempted"])
             self.assertTrue(state["update_reported"])
@@ -1177,11 +1177,11 @@ class PublicBundleTests(unittest.TestCase):
             self.assertEqual(set(payload["mcpServers"]), {MCP_NAME})
         self.assertEqual(
             json.loads(MANIFEST.read_text(encoding="utf-8"))["version"],
-            "0.8.0",
+            "0.8.1",
         )
         self.assertEqual(
             json.loads(ZCODE_MANIFEST.read_text(encoding="utf-8"))["version"],
-            "0.8.0",
+            "0.8.1",
         )
 
     def test_node_python_launcher_handles_chinese_space_and_exclamation_path(self) -> None:
@@ -1615,11 +1615,8 @@ class OutboxTests(unittest.TestCase):
         invalid_values = (
             ("product_id", "product.CustomerProject"),
             ("product_id", "customer.tws-earbud"),
-            ("product_id", "product.tws-earbud"),
             ("domain_id", "domain.ClientFeature"),
             ("domain_id", "project.app-integration"),
-            ("domain_id", "domain.audio"),
-            ("domain_id", "domain.bluetooth"),
         )
         for field, value in invalid_values:
             candidate = self.candidate()
