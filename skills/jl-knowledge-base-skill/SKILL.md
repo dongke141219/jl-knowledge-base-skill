@@ -20,11 +20,11 @@ Do not decide that a project is Jieli merely because a prompt contains `杰理`,
 
 For each confirmed JL engineering task:
 
-1. Classify the request once as a **feature requirement** or **issue/problem**. Place it in the narrow chain `product -> domain -> capability -> subfeature -> boundary/issue`. Infer chip, SDK, board, configuration ownership, and build entry from the authorized local project where possible.
-2. Apply the exact one-time consent gate below. With current consent, call `create_knowledge_task` at most once and `query_task_fragments` at most once for the classified decision. Every gateway call includes `client_version: "0.8.1"`.
+1. Decide once whether this is a **bounded feature/issue change** or **complete project delivery from requirements**. For a bounded change keep one concise fact record with the change, relevant source anchors, validation, and remaining limits. For complete delivery maintain the full requirement map, roles, configuration ownership, implementation, and acceptance records. Infer optional chip/SDK labels from evidence; do not build a complete taxonomy chain merely to finish a small change.
+2. Apply the exact one-time consent gate below. With current consent, call `create_knowledge_task` at most once and `query_task_fragments` at most once for the classified decision. Every gateway call includes `client_version: "0.8.2"`.
 3. Treat returned fragments only as scoped reference. If nothing is found, the result is unrelated, or the gateway is unavailable, continue normal local inspection, implementation, diagnosis, and verification without retrying the query in this task.
 4. Make the smallest complete local change and use the project's existing Makefile/build entry when the environment permits. Local source, a real build, and correct hardware evidence override a conflicting fragment.
-5. After all local work is complete, perform one value assessment. Submit at most one sanitized solution candidate only when this task itself produced a genuinely new reusable local engineering conclusion. Otherwise finish without a candidate.
+5. After local work, enqueue at most one sanitized candidate containing the concrete new facts from this task. It may contain several related implementation, failure, or validation facts. Do not perform corpus-wide novelty checks, semantic deduplication, or a separate model review on the client; the central weekly curation does that work before administrator-approved publication. Pure questions or unchanged restatements need no candidate.
 
 Normal question answering and read-only diagnosis therefore use no more than one knowledge query and one closeout. Reading files, editing, and building do not create separate closeouts or invalidate an already completed task outcome.
 
@@ -63,31 +63,32 @@ Until current consent exists, local-only SDK inspection, editing, and building m
 ## Make one scoped query
 
 1. Build one narrow sanitized purpose from the classified feature or problem and its product, function domain, chip, SDK, observed behavior, and decision. Do not include identities, private paths, source, raw logs, credentials, or unrelated material.
-2. Call `create_knowledge_task` once with `contribution_consent: "同意"`, `contribution_consent_version: "2026-08-31-v2"`, and `client_version: "0.8.1"`. Keep its returned `task_id` only for this task. Treat its `candidate_taxonomy` as the allowed product/domain classification for any later candidate.
-3. Call `query_task_fragments` once with that `task_id`, `include_incubator: false`, and `client_version: "0.8.1"`. Every query and candidate submission must carry a `task_id` returned for the same concrete task; never invent, enumerate, persist as knowledge, or reuse one for another task or user.
+2. Call `create_knowledge_task` once with `contribution_consent: "同意"`, `contribution_consent_version: "2026-08-31-v2"`, and `client_version: "0.8.2"`. Keep its returned `task_id` only for this task. Treat its `candidate_taxonomy` as the allowed product/domain classification for any later candidate.
+3. Call `query_task_fragments` once with that `task_id`, `include_incubator: false`, and `client_version: "0.8.2"`. Every query and candidate submission must carry a `task_id` returned for the same concrete task; never invent, enumerate, persist as knowledge, or reuse one for another task or user.
 4. Request only the few formal fragments needed for this decision. Never use an empty/wildcard query, request corpus inventory/statistics/export, paginate broadly, or chain queries to reconstruct the corpus.
 5. A non-empty result is `usage recorded`; an empty result is `server gap`. An unrelated result may be ignored. A failed or malformed call is `query unavailable`. None of these outcomes blocks local engineering or requires another query.
 6. Preserve each used fragment's evidence and applicability as `[K:<fragment-id>][E1|E2|E3][scope:<applicability>]`. Never persist or republish returned fragment text.
 
 Evidence labels mean:
 
+- `E0`: recorded an observed task fact; implementation, cause, and validation remain unconfirmed.
 - `E1`: inspected, implemented, or reproduced without a passing target build.
 - `E2`: passed a real build for the stated scope and still awaits hardware.
 - `E3`: passed scenario-correct hardware verification for the stated scope.
 
-## Contribute only a genuinely new reusable result
+## Record concrete facts once; curate centrally
 
-After completing the user's work, ask one question internally: **Did this task create a new local engineering conclusion that another JL project could reuse?**
+After completing the user's work, capture concrete local engineering facts in one concise record. Unknown version labels, missing baseline SDKs, pending hardware verification, or absent customer feedback do not by themselves disqualify a candidate. Preserve uncertainty and failed conditions. Do not decide that silence proves success.
 
-Do not contribute ordinary questions, browsing, formatting, guesses, unchanged project behavior, a server query hit/gap by itself, or a restatement/combination of private returned fragments. Do contribute a concrete new implementation method, verified diagnosis/fix, important boundary, build result, or explicit hardware result when it is reusable beyond the current customer.
+Do not contribute ordinary questions, browsing, formatting, guesses, unchanged project behavior, a server query hit/gap by itself, or a restatement/combination of private returned fragments. Do contribute a concrete local implementation method, diagnosis/fix, important failure boundary, build result, or explicit hardware result with its evidence. The backend decides its reusable value and duplicate relationships; the client does not need to prove it is globally novel.
 
-For one valuable result:
+For one task with concrete local facts:
 
-1. Derive the smallest `product -> domain -> capability -> subfeature -> boundary -> issue` chain from local evidence created in this task.
-2. Finish all inspection, edits, and builds before preparing the candidate. Set `candidate_kind: solution` and the honest E1/E2/E3 lifecycle.
+1. Use the task's known product and function scope. One capability candidate may contain several related facts; do not require a complete six-level parent chain or twelve-section capability document. Missing optional chip/SDK/patch labels remain unknown. The server organizes individual knowledge points, deduplicates, explains value, and preserves conditional branches.
+2. Finish all inspection, edits, and builds before preparing the candidate. Set `candidate_kind: solution` and the honest E0/E1/E2/E3/E4 lifecycle; never relabel an unconfirmed fact as inspected or verified.
 3. Strip all source and source excerpts, raw logs, customer/company/project/account identity, email, IP/MAC/hostname, URL, local/remote path, archive, firmware, KEY material, credential, token, private protocol payload, and returned private fragment text.
 4. Enqueue the candidate through `knowledge_outbox.py` before upload. Its canonical SHA-256 is the reusable-result fingerprint and MCP `idempotency_key`. The same fingerprint collapses locally; a retained uploaded receipt prevents the same result being queued again.
-5. If the helper returns `already_uploaded: true`, do not submit it again. Otherwise call `submit_knowledge_candidate` at most once for this task with the current `task_id`, exact candidate, idempotency key, and `client_version: "0.8.1"`.
+5. If the helper returns `already_uploaded: true`, do not submit it again. Otherwise call `submit_knowledge_candidate` at most once for this task with the current `task_id`, exact candidate, idempotency key, and `client_version: "0.8.2"`.
 6. On `status: queued_for_review`, acknowledge the local item. It remains in the candidate area and is not searchable until internal review promotes it.
 7. On timeout, offline, rate limit, authentication interruption, or operator stop, retain the sanitized local item for bounded retry and finish the user's task. Do not retry it again in the same turn. On privacy/schema/scope rejection, drop the unsafe item rather than retrying unchanged.
 

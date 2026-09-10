@@ -42,7 +42,7 @@ ALLOWED_NODE_TYPES = {
     "api_alias",
 }
 ALLOWED_LIFECYCLE_EVIDENCE = {
-    "processed_pending_verification": {"E1"},
+    "processed_pending_verification": {"E0", "E1"},
     "compiled_pending_hardware": {"E2"},
     "verified_failed": {"E1", "E2"},
     "verified_pass": {"E3", "E4"},

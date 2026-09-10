@@ -28,7 +28,7 @@ To withdraw and delete all unsent candidates:
 
 ## Enqueue before upload
 
-Finish all local inspection, editing, and building first. Then prepare a candidate only when the completed task created a genuinely new reusable local engineering conclusion. Ordinary questions, read-only browsing without a new conclusion, query hits/gaps, and restatements of returned fragments require no marker and no candidate.
+Finish the authorized local work first. A bounded change produces one short factual record; a complete project keeps a complete local project record. Prepare at most one sanitized candidate with the useful facts from this task, including actual checks and remaining uncertainty. Do not prove global novelty, compare the entire knowledge base, or require complete capability chapters before submitting. Central candidate review handles semantic deduplication, classification, and value assessment. Unknown SDK identity, pending hardware verification, or absent customer feedback do not by themselves prevent a factual candidate. Never upgrade evidence or infer success from silence. Ordinary questions, bare query hits/gaps, and restatements of returned fragments require no marker and no candidate.
 
 Write a candidate containing exactly the gateway candidate fields to a private scratch JSON file, or pass it on standard input. Do not use a command-line JSON argument because process listings and shell history can retain it. Enqueue with:
 
@@ -51,7 +51,7 @@ Do not process old pending entries during ordinary question answering or read-on
 For each entry:
 
 1. Obtain a narrow server-issued task if the current JL task has no suitable live `task_id`. Do not save a task ID in the outbox.
-2. Call `submit_knowledge_candidate` with `task_id`, `candidate`, `client_version: "0.8.1"`, and `idempotency_key` equal to the outbox entry `id`.
+2. Call `submit_knowledge_candidate` with `task_id`, `candidate`, `client_version: "0.8.2"`, and `idempotency_key` equal to the outbox entry `id`.
 3. Only after `status: queued_for_review`, remove it:
 
 ```text
@@ -82,11 +82,11 @@ Synchronization retries are best effort and must never roll back, delay, or reop
 
 ## Bounded task closeout
 
-At the end of a confirmed JL task, keep one bounded outcome: a successful non-empty query is **usage recorded**; a successful empty query is **server gap**; a failed/malformed/unavailable call is **query unavailable**; no shared access is **local only**; and an accepted new reusable result is **solution candidate**. The candidate may replace the query outcome, but later reads, edits, builds, or answer wording do not create another required closeout. The hook may remind the model once if it omitted the consent check or one query, then it allows local completion. Every create, query, and submit payload includes `client_version: "0.8.1"`.
+At the end of a confirmed JL task, keep one bounded outcome: a successful non-empty query is **usage recorded**; a successful empty query is **server gap**; a failed/malformed/unavailable call is **query unavailable**; no shared access is **local only**; and an accepted task-fact submission is **solution candidate**. The candidate may replace the query outcome, but later reads, edits, builds, or answer wording do not create another required closeout. The hook may remind the model once if it omitted the consent check or one query, then it allows local completion. Every create, query, and submit payload includes `client_version: "0.8.2"`.
 
 ## Candidate shape
 
-Use the exact `candidate` object from `gateway-contract.md`. This normal task workflow submits only `candidate_kind: solution` for a concrete new reusable local finding. A narrow query miss is already recorded as `server gap`; do not submit a duplicate gap candidate merely to complete the workflow. `product_id` and `domain_id` are mandatory lowercase semantic IDs such as `product.tws-earbuds` and `domain.app-integration`. Use the current task's server-issued product identity; unknown products are accepted for classification review. Reuse suggested domains where applicable; new safe domains enter review rather than being blocked by a client whitelist. They must describe a reusable product purpose and function domain, never a customer, company, project, account, repository, or directory. Relations, when present, contain only `type` and `target_semantic_id`; the allowed types are `contains`, `depends_on`, `extends`, `alternative`, and `supersedes`. Example:
+Use the exact `candidate` object from `gateway-contract.md`. This normal task workflow submits only `candidate_kind: solution` for a concrete local task record that may contain multiple related facts, with their evidence and limitations. A narrow query miss is already recorded as `server gap`; do not submit a duplicate gap candidate merely to complete the workflow. `product_id` and `domain_id` are mandatory lowercase semantic IDs such as `product.tws-earbuds` and `domain.app-integration`. Use the current task's server-issued product identity; unknown products are accepted for classification review. Reuse suggested domains where applicable; new safe domains enter review rather than being blocked by a client whitelist. They must describe a reusable product purpose and function domain, never a customer, company, project, account, repository, or directory. Relations, when present, contain only `type` and `target_semantic_id`; the allowed types are `contains`, `depends_on`, `extends`, `alternative`, and `supersedes`. Example:
 
 ```json
 {"type":"depends_on","target_semantic_id":"audio.anc"}

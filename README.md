@@ -1,6 +1,6 @@
 # JL Knowledge Base Skill
 
-> **v0.8.1：先确认工程，再分类、查一次、做完后评估一次。** 不需要输入固定 Skill 名称或关键词；只有本地证据确认属于 JL 的项目才进入共享知识流程。
+> **v0.8.2：局部修改轻量记录，整项目完整记录，统一提交候选审核。** 不需要输入固定 Skill 名称或关键词；只有本地证据确认属于 JL 的项目才进入共享知识流程。
 
 官方下载入口（内容一致，任选一个即可）：
 
@@ -21,7 +21,7 @@
 >
 > 未输入“同意”，不能访问共享知识库；仍可让自己的 AI 客户端处理本地 SDK。
 
-> **v0.7.1 暂时保持兼容。** 它访问共享服务时会收到 v0.8.1 升级提示，但因为旧包里没有升级器，这一次仍需按下文手工升级。v0.8.0 是第一版具备服务器版本核对和白名单自更新能力的客户端；离线旧包仍无法收到联网提示，本地 SDK 检查、修改和编译不受影响。
+> **v0.7.1 暂时保持兼容。** 它访问共享服务时会收到 v0.8.2 升级提示，但因为旧包里没有升级器，这一次仍需按下文手工升级。v0.8.0 是第一版具备服务器版本核对和白名单自更新能力的客户端；离线旧包仍无法收到联网提示，本地 SDK 检查、修改和编译不受影响。
 
 ## 可以做什么
 
@@ -51,7 +51,7 @@
 
 ## 为什么会越用越智能
 
-首次明确同意后，每个已确认的实质 JL 任务最多查询一次与当前问题相关的正式知识。AI 先完成实际任务，结束时再评估一次：只有形成了新的、可复用且有本地证据支持的工程结论，才整理至多一份小型、脱敏、结构化候选；候选经过审核后，才会进入同一个知识库的正式功能链供以后复用。
+首次明确同意后，每个已确认的实质 JL 任务最多查询一次与当前问题相关的正式知识。AI 先完成实际任务：局部修改只写一份简短事实记录，完整项目保留完整项目记录，再提交至多一份脱敏候选，可包含多个相关事实。客户端不扫描全库证明“是不是新知识”；分类整理、语义去重和价值判断统一放到后台，管理员批准后才进入正式知识。尚未实机验证或客户没有反馈，都如实记录，不能当作验证成功。
 
 这不代表每句话或每次修改都会新增知识：普通闲聊、重复内容、没有可靠结论的猜测、共享知识片段原文都不会上传。同一结论会按规范化哈希去重；服务暂时失败只保留一份本地脱敏候选，不会卡住回答、循环重试或要求再次收口。
 
@@ -109,7 +109,7 @@ GitHub 和 Gitee 二选一，不要重复添加同名市场。
 最后的插件列表必须出现下面这一行，版本号可以高于示例：
 
 ```text
-jl-knowledge-base-skill@jl-knowledge  installed, enabled  0.8.1
+jl-knowledge-base-skill@jl-knowledge  installed, enabled  0.8.2
 ```
 
 同时应看到：
@@ -223,7 +223,7 @@ https://gitee.com/fofo123/jl-knowledge-base-skill.git
 
 ## English quick start
 
-JL Knowledge Base Skill supports natural-language JL SDK implementation and diagnosis in Codex, Gemini CLI, and ZCode. It first confirms the current project from bounded local JL signatures; keywords alone do not activate shared access. It then classifies the feature or issue, performs at most one scoped query, finishes normal engineering work even on a miss or outage, and assesses once whether a genuinely new reusable local result should be contributed. No customer-platform registration, login, application, approval, or individual credential is required. On first shared use, the user must personally type the exact Chinese phrase `同意`.
+JL Knowledge Base Skill supports natural-language JL SDK implementation and diagnosis in Codex, Gemini CLI, and ZCode. It first confirms the current project from bounded local JL signatures; keywords alone do not activate shared access. It then classifies the feature or issue, performs at most one scoped query, finishes normal engineering work even on a miss or outage, and submits at most one sanitized task-fact candidate. Small changes use short records; complete projects keep full project records. Central review handles semantic deduplication and value assessment before administrator approval. No customer-platform registration, login, application, approval, or individual credential is required. On first shared use, the user must personally type the exact Chinese phrase `同意`.
 
 The one shared knowledge base covers implementable capabilities, engineering implementation guides, product/chip/SDK applicability, boundaries, issue resolutions, and real build or hardware evidence. Sanitized reusable findings enter the candidate area of that same knowledge base and become searchable only after review. Complete source, SDKs, schematics, UI documents, firmware, raw logs, secrets, and identities are not uploaded.
 

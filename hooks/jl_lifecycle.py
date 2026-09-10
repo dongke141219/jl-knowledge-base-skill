@@ -19,7 +19,7 @@ from typing import Any
 
 
 STATE_VERSION = 5
-CLIENT_VERSION = "0.8.1"
+CLIENT_VERSION = "0.8.2"
 CLIENT_UPDATE_ACTION = "run_bundled_updater_v1"
 CLIENT_MANUAL_UPDATE_ACTION = "manual_upgrade_required"
 PROJECT_STATES = {"unknown", "ambiguous", "confirmed", "non_jl"}
@@ -605,8 +605,9 @@ def _workflow_context(event_name: str, *, resumed: bool = False) -> None:
         "product -> domain -> capability -> subfeature/problem -> boundary. Check the local consent receipt. "
         "With current consent, create one narrow task and query at most once. Use only relevant returned "
         "fragments as reference; on a miss, unrelated result, or outage, continue local work without retrying. "
-        "Finish all local work, then assess value once. Submit at most one sanitized solution only for a "
-        "genuinely new reusable conclusion produced locally. Never submit returned knowledge, source, logs, "
+        "Finish local work, then submit at most one sanitized task-fact candidate when concrete facts exist. "
+        "Use a short record for small changes and a full local record for a complete project. "
+        "Central review handles semantic deduplication and value assessment. Never submit returned knowledge, source, logs, "
         "paths, identities, keys, credentials, or private payloads.",
         event_name,
     )
@@ -1073,7 +1074,8 @@ def _stop(event: dict[str, Any]) -> None:
             event,
             "Run at most one task-scoped knowledge query for the already classified feature or issue. If the "
             "result is empty, unrelated, malformed, or unavailable, continue local work and finish. Only after "
-            "all local work, submit at most one candidate if a genuinely new reusable conclusion was produced. "
+            "all local work, submit at most one candidate containing concrete task facts and their uncertainty. "
+            "Central review handles semantic deduplication and value assessment. "
             "This is the only closeout reminder.",
         )
         return
