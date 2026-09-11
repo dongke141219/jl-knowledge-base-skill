@@ -19,7 +19,7 @@ from typing import Any
 
 
 STATE_VERSION = 5
-CLIENT_VERSION = "0.8.3"
+CLIENT_VERSION = "0.8.4"
 CLIENT_UPDATE_ACTION = "run_bundled_updater_v1"
 CLIENT_MANUAL_UPDATE_ACTION = "manual_upgrade_required"
 PROJECT_STATES = {"unknown", "ambiguous", "confirmed", "non_jl"}

@@ -1,6 +1,6 @@
 # Public knowledge tool contract
 
-The public MCP connection is named `jl-knowledge-base`. Its HTTPS URL is declared in the installed client's manifest and includes `client_version=0.8.3`. Every tool payload also sends `client_version: "0.8.3"`. The bundle contains no token, password, customer account, or private service credential.
+The public MCP connection is named `jl-knowledge-base`. Its HTTPS URL is declared in the installed client's manifest and includes `client_version=0.8.4`. Every tool payload also sends `client_version: "0.8.4"`. The bundle contains no token, password, customer account, or private service credential.
 
 Only these four tools are available:
 
@@ -24,7 +24,7 @@ Request:
 {
   "contribution_consent": "同意",
   "contribution_consent_version": "2026-08-31-v2",
-  "client_version": "0.8.3",
+  "client_version": "0.8.4",
   "purpose": "Concrete sanitized problem, feature, or decision",
   "product": "Product form inferred from the current project",
   "chip": "JL chip inferred from the current project",
@@ -42,7 +42,7 @@ Response fields used by the client:
 ```json
 {
   "task_id": "Server-issued opaque task identifier",
-  "client_version": "0.8.3",
+  "client_version": "0.8.4",
   "consent_version": "Current disclosure version",
   "scope": {
     "purpose": "Concrete problem, feature, or decision",
@@ -67,7 +67,7 @@ Request:
 ```json
 {
   "task_id": "Server-issued opaque task identifier",
-  "client_version": "0.8.3",
+  "client_version": "0.8.4",
   "query": "Specific sanitized implementation or diagnosis decision",
   "include_incubator": false,
   "limit": 5
@@ -123,7 +123,7 @@ Request:
 ```json
 {
   "task_id": "Server-issued opaque task identifier",
-  "client_version": "0.8.3",
+  "client_version": "0.8.4",
   "idempotency_key": "Canonical candidate SHA-256 returned by the local outbox",
   "candidate": {
     "candidate_kind": "solution",
@@ -152,7 +152,7 @@ Request:
 }
 ```
 
-`candidate_kind` is `solution` for one factual task record, which may contain several related implementation, failure, or validation facts with their evidence and uncertainty. The client does not prove global novelty; central curation handles semantic deduplication and value assessment before administrator approval. The normal v0.8.3 workflow records an empty query as a server gap and does not submit a duplicate `knowledge_gap` candidate. Ordinary Q&A, unchanged known guidance, or text returned by the gateway is not a new solution.
+`candidate_kind` is `solution` for one factual task record, which may contain several related implementation, failure, or validation facts with their evidence and uncertainty. The client does not prove global novelty; central curation handles semantic deduplication and value assessment before administrator approval. The normal v0.8.4 workflow records an empty query as a server gap and does not submit a duplicate `knowledge_gap` candidate. Ordinary Q&A, unchanged known guidance, or text returned by the gateway is not a new solution.
 
 Lifecycle and evidence must match reality:
 
@@ -185,9 +185,9 @@ Acknowledge and delete the matching local outbox item only when `status: queued_
 
 ```json
 {
-  "current_version": "0.8.3",
+  "current_version": "0.8.4",
   "minimum_version": "0.7.1",
-  "latest_version": "0.8.3",
+  "latest_version": "0.8.4",
   "update_available": true,
   "required": false,
   "automatic_update_supported_from": "0.8.0",
@@ -206,12 +206,12 @@ Send exactly the nested `report` object produced by the helper:
 
 ```json
 {
-  "client_version": "0.8.3",
+  "client_version": "0.8.4",
   "attempt_id": "32 lowercase hexadecimal characters",
   "client_kind": "codex",
-  "from_version": "0.8.3",
-  "target_version": "0.8.3",
-  "observed_version": "0.8.3",
+  "from_version": "0.8.4",
+  "target_version": "0.8.4",
+  "observed_version": "0.8.4",
   "action_id": "run_bundled_updater_v1",
   "outcome": "success",
   "stage": "verification",
