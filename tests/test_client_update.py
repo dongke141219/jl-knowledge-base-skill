@@ -28,7 +28,7 @@ class ClientUpdateTests(unittest.TestCase):
         output = io.StringIO()
         with mock.patch.object(client_update, "_run_update") as run_update, redirect_stdout(output):
             code = client_update.main(
-                ["--client", "codex", "--target", "0.8.4", "--action-id", "run-this-shell"]
+                ["--client", "codex", "--target", "0.8.6", "--action-id", "run-this-shell"]
             )
         self.assertEqual(code, 2)
         self.assertFalse(run_update.called)
@@ -49,7 +49,8 @@ class ClientUpdateTests(unittest.TestCase):
                             "installed": [
                                 {
                                     "pluginId": client_update.PLUGIN_ID,
-                                    "version": "0.8.4",
+                                    "version": "0.8.5",
+                                    "enabled": True,
                                 }
                             ]
                         }
@@ -57,13 +58,13 @@ class ClientUpdateTests(unittest.TestCase):
                 )
             return completed(command)
 
-        report = client_update._base_report("codex", "0.8.4")
+        report = client_update._base_report("codex", "0.8.5")
         with mock.patch.object(client_update, "_find_codex", return_value="codex"), mock.patch.object(
             client_update, "_run", side_effect=fake_run
         ):
             result = client_update._update_codex(report)
         self.assertEqual(result["outcome"], "success")
-        self.assertEqual(result["observed_version"], "0.8.4")
+        self.assertEqual(result["observed_version"], "0.8.5")
         self.assertEqual(
             calls,
             [
@@ -73,6 +74,61 @@ class ClientUpdateTests(unittest.TestCase):
             ],
         )
 
+    def test_codex_rejects_installed_but_disabled_plugin(self) -> None:
+        responses = [
+            completed(["marketplace"]),
+            completed(["add"]),
+            completed(
+                ["list"],
+                stdout=json.dumps(
+                    {
+                        "installed": [
+                            {
+                                "pluginId": client_update.PLUGIN_ID,
+                                "version": "0.8.5",
+                                "enabled": False,
+                            }
+                        ]
+                    }
+                ),
+            ),
+        ]
+        report = client_update._base_report("codex", "0.8.5")
+        with mock.patch.object(client_update, "_find_codex", return_value="codex"), mock.patch.object(
+            client_update, "_run", side_effect=responses
+        ):
+            result = client_update._update_codex(report)
+        self.assertEqual(result["outcome"], "failed")
+        self.assertEqual(result["stage"], "verification")
+        self.assertEqual(result["reason_code"], "verification_failed")
+        self.assertEqual(result["observed_version"], "0.8.5")
+
+    def test_codex_requires_explicit_enabled_field(self) -> None:
+        responses = [
+            completed(["marketplace"]),
+            completed(["add"]),
+            completed(
+                ["list"],
+                stdout=json.dumps(
+                    {
+                        "installed": [
+                            {
+                                "pluginId": client_update.PLUGIN_ID,
+                                "version": "0.8.5",
+                            }
+                        ]
+                    }
+                ),
+            ),
+        ]
+        report = client_update._base_report("codex", "0.8.5")
+        with mock.patch.object(client_update, "_find_codex", return_value="codex"), mock.patch.object(
+            client_update, "_run", side_effect=responses
+        ):
+            result = client_update._update_codex(report)
+        self.assertEqual(result["outcome"], "failed")
+        self.assertEqual(result["reason_code"], "verification_failed")
+
     def test_codex_can_repair_refresh_failure_from_existing_snapshot(self) -> None:
         responses = [
             completed(["refresh"], code=1, stderr="temporary network failure"),
@@ -80,11 +136,19 @@ class ClientUpdateTests(unittest.TestCase):
             completed(
                 ["list"],
                 stdout=json.dumps(
-                    {"installed": [{"pluginId": client_update.PLUGIN_ID, "version": "0.8.4"}]}
+                    {
+                        "installed": [
+                            {
+                                "pluginId": client_update.PLUGIN_ID,
+                                "version": "0.8.5",
+                                "enabled": True,
+                            }
+                        ]
+                    }
                 ),
             ),
         ]
-        report = client_update._base_report("codex", "0.8.4")
+        report = client_update._base_report("codex", "0.8.5")
         with mock.patch.object(client_update, "_find_codex", return_value="codex"), mock.patch.object(
             client_update, "_run", side_effect=responses
         ):
@@ -95,7 +159,7 @@ class ClientUpdateTests(unittest.TestCase):
     def test_failure_is_reduced_to_an_enum_and_never_returns_raw_output(self) -> None:
         secret_text = "C" + ":\\Customers\\secret\\build.log token=should-not-leak"
         responses = [completed(["refresh"]), completed(["install"], code=1, stderr=secret_text)]
-        report = client_update._base_report("codex", "0.8.4")
+        report = client_update._base_report("codex", "0.8.5")
         with mock.patch.object(client_update, "_find_codex", return_value="codex"), mock.patch.object(
             client_update, "_run", side_effect=responses
         ):
@@ -109,7 +173,7 @@ class ClientUpdateTests(unittest.TestCase):
 
     def test_zcode_is_reported_as_manual_instead_of_running_an_unknown_cli(self) -> None:
         with mock.patch.object(client_update, "_run") as run_command:
-            result = client_update._run_update("zcode", "0.8.4")
+            result = client_update._run_update("zcode", "0.8.5")
         self.assertFalse(run_command.called)
         self.assertEqual(result["outcome"], "manual_required")
         self.assertEqual(result["reason_code"], "unsupported_client")
@@ -117,7 +181,7 @@ class ClientUpdateTests(unittest.TestCase):
     def test_same_target_is_attempted_once_during_the_retry_window(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             output = io.StringIO()
-            report = client_update._base_report("codex", "0.8.5")
+            report = client_update._base_report("codex", "0.8.6")
             report.update(outcome="failed", stage="plugin_install", reason_code="network_error")
             with mock.patch.object(client_update, "_state_dir", return_value=Path(temporary)), mock.patch.object(
                 client_update, "_run_update", return_value=report
@@ -128,7 +192,7 @@ class ClientUpdateTests(unittest.TestCase):
                             "--client",
                             "codex",
                             "--target",
-                            "0.8.5",
+                            "0.8.6",
                             "--action-id",
                             client_update.ACTION_ID,
                         ]
@@ -144,7 +208,7 @@ class ClientUpdateTests(unittest.TestCase):
                             "--client",
                             "codex",
                             "--target",
-                            "0.8.5",
+                            "0.8.6",
                             "--action-id",
                             client_update.ACTION_ID,
                         ]

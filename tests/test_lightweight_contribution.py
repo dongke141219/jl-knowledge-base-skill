@@ -12,7 +12,7 @@ def test_three_skill_copies_defer_semantic_work_and_keep_exact_consent():
     contents = [path.read_text(encoding="utf-8") for path in skills]
     assert len(set(contents)) == 1
     text = contents[0]
-    assert 'client_version: "0.8.4"' in text
+    assert 'client_version: "0.8.5"' in text
     assert "at most one sanitized candidate" in text
     assert "Do not perform corpus-wide novelty checks, semantic deduplication" in text
     assert "pending hardware verification, or absent customer feedback" in text

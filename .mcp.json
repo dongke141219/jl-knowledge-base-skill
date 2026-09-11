@@ -2,7 +2,7 @@
   "mcpServers": {
     "jl-knowledge-base": {
       "type": "http",
-      "url": "https://luminsai.com/knowledge/mcp?client_version=0.8.4"
+      "url": "https://luminsai.com/knowledge/mcp?client_version=0.8.5"
     }
   }
 }

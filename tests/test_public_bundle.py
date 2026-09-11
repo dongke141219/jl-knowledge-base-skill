@@ -36,7 +36,7 @@ HOOK_SCRIPT = CODEX_PACKAGE / "hooks" / "jl_lifecycle.py"
 HOOK_NODE_LAUNCHER = CODEX_PACKAGE / "hooks" / "python-launcher.mjs"
 HOOK_WINDOWS_LAUNCHER = CODEX_PACKAGE / "hooks" / "run_jl_lifecycle.cmd"
 CLIENT_UPDATER = CODEX_PACKAGE / "scripts" / "client_update.py"
-PUBLIC_MCP_URL = "https://luminsai.com/knowledge/mcp?client_version=0.8.4"
+PUBLIC_MCP_URL = "https://luminsai.com/knowledge/mcp?client_version=0.8.5"
 MCP_NAME = "jl-knowledge-base"
 CONSENT_PHRASE = "同意"
 REVOCATION_PHRASE = "REVOKE_AND_DELETE_PENDING_CONTRIBUTIONS"
@@ -91,7 +91,11 @@ def invoke_lifecycle_hook(state_dir: Path, event: dict[str, object]) -> dict[str
         text=True,
         encoding="utf-8",
         capture_output=True,
-        env={**os.environ, "PLUGIN_DATA": str(state_dir)},
+        env={
+            **os.environ,
+            "PLUGIN_DATA": str(state_dir),
+            "JL_KNOWLEDGE_CLIENT_HOME": str(state_dir),
+        },
         check=False,
     )
     if result.returncode != 0:
@@ -107,9 +111,57 @@ def consent_tool_event(granted: bool, *, grant: bool = False) -> dict[str, objec
         "tool_input": {"command": f'python "scripts/knowledge_outbox.py" {action}'},
         "tool_response": {
             "exit_code": 0,
-            "output": json.dumps({"consent_granted": granted}),
+            "output": json.dumps(
+                {
+                    "consent_granted": granted,
+                    "disclosure_version": "2026-08-31-v2",
+                }
+            ),
         },
     }
+
+
+def persist_consent(state_dir: Path) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-X",
+            "utf8",
+            str(OUTBOX),
+            "--state-dir",
+            str(state_dir),
+            "grant",
+            "--accept",
+            CONSENT_PHRASE,
+        ],
+        text=True,
+        encoding="utf-8",
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise AssertionError(result.stderr or result.stdout)
+
+
+def valid_fragment(fragment_id: str = "one", **overrides: object) -> dict[str, object]:
+    fragment: dict[str, object] = {
+        "fragment_id": fragment_id,
+        "product_id": "product.tws-earbuds",
+        "domain_id": "domain.audio-acoustic",
+        "capability_id": "capability.anc",
+        "node_type": "subfeature",
+        "title": "Scoped ANC reference",
+        "summary": "A bounded formal fragment returned for this task.",
+        "lifecycle_status": "processed_pending_verification",
+        "evidence_level": "E1",
+        "layer": "formal_shared",
+        "scope": {"products": ["TWS"], "chips": ["AC701N"]},
+        "workflow": ["Inspect the task-specific configuration."],
+        "validation": ["Validate on the stated target."],
+        "limitations": ["Use only within the stated scope."],
+    }
+    fragment.update(overrides)
+    return fragment
 
 
 def query_tool_event(
@@ -199,7 +251,7 @@ class PublicBundleTests(unittest.TestCase):
     def test_manifest_is_distribution_ready(self) -> None:
         payload = json.loads(MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(payload["name"], "jl-knowledge-base-skill")
-        self.assertEqual(payload["version"], "0.8.4")
+        self.assertEqual(payload["version"], "0.8.5")
         self.assertEqual(payload["skills"], "./skills/")
         self.assertEqual(payload["mcpServers"], "./.mcp.json")
         self.assertNotIn("hooks", payload)
@@ -219,7 +271,7 @@ class PublicBundleTests(unittest.TestCase):
     def test_gemini_extension_is_distribution_ready(self) -> None:
         payload = json.loads(GEMINI_MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(payload["name"], "jl-knowledge-base-skill")
-        self.assertEqual(payload["version"], "0.8.4")
+        self.assertEqual(payload["version"], "0.8.5")
         self.assertEqual(payload["contextFileName"], "GEMINI.md")
         server = payload["mcpServers"][MCP_NAME]
         self.assertEqual(server["httpUrl"], PUBLIC_MCP_URL)
@@ -252,7 +304,7 @@ class PublicBundleTests(unittest.TestCase):
     def test_zcode_plugin_and_marketplace_are_distribution_ready(self) -> None:
         payload = json.loads(ZCODE_MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(payload["name"], "jl-knowledge-base-skill")
-        self.assertEqual(payload["version"], "0.8.4")
+        self.assertEqual(payload["version"], "0.8.5")
         self.assertEqual(
             payload["commands"],
             ["commands/jl-implement.md", "commands/jl-diagnose.md"],
@@ -320,7 +372,7 @@ class PublicBundleTests(unittest.TestCase):
         for field in (
             '"contribution_consent"',
             '"contribution_consent_version"',
-            '"client_version": "0.8.4"',
+            '"client_version": "0.8.5"',
             '"2026-08-31-v2"',
             '"purpose"',
             '"allowed_tools"',
@@ -427,7 +479,7 @@ class PublicBundleTests(unittest.TestCase):
         self.assertIn("Python 3.10", gemini)
         self.assertIn("Python 3.10", skill)
         self.assertIn("knowledge_outbox.py grant --accept 同意", gemini)
-        self.assertIn('client_version: "0.8.4"', gemini)
+        self.assertIn('client_version: "0.8.5"', gemini)
         self.assertIn("GitHub Issues", readme)
         self.assertIn("Gitee Issues", readme)
         self.assertIn("经作者完成适配的其他客户端", privacy)
@@ -451,7 +503,7 @@ class PublicBundleTests(unittest.TestCase):
             'plugin marketplace upgrade jl-knowledge',
             'plugin add jl-knowledge-base-skill@jl-knowledge',
             'git config --global url."https://gitee.com/fofo123/jl-knowledge-base-skill.git".insteadOf',
-            "jl-knowledge-base-skill@jl-knowledge  installed, enabled  0.8.4",
+            "jl-knowledge-base-skill@jl-knowledge  installed, enabled  0.8.5",
             "Connection was reset",
             "原理图",
             "UI 交互文档",
@@ -481,7 +533,7 @@ class PublicBundleTests(unittest.TestCase):
             "Set-Alias CodexDesktop",
             "CodexDesktop plugin marketplace add",
             'git config --global url."https://gitee.com/fofo123/jl-knowledge-base-skill.git".insteadOf',
-            "jl-knowledge-base-skill@jl-knowledge  installed, enabled  0.8.4",
+            "jl-knowledge-base-skill@jl-knowledge  installed, enabled  0.8.5",
             "CodexDesktop 无法识别为 cmdlet",
             "Connection was reset",
             "完全退出",
@@ -600,9 +652,9 @@ class PublicBundleTests(unittest.TestCase):
             invoke_lifecycle_hook(state_dir, consent_tool_event(True))
             create_event = create_tool_event("update-task")
             create_event["tool_response"]["structuredContent"]["client_update"] = {
-                "current_version": "0.8.4",
+                "current_version": "0.8.5",
                 "minimum_version": "0.7.1",
-                "latest_version": "0.8.5",
+                "latest_version": "0.8.6",
                 "update_available": True,
                 "required": False,
                 "automatic_update_supported_from": "0.8.4",
@@ -617,12 +669,12 @@ class PublicBundleTests(unittest.TestCase):
                 notice["hookSpecificOutput"]["additionalContext"],
             )
             report = {
-                "client_version": "0.8.4",
+                "client_version": "0.8.5",
                 "attempt_id": "a" * 32,
                 "client_kind": "codex",
-                "from_version": "0.8.4",
-                "target_version": "0.8.5",
-                "observed_version": "0.8.5",
+                "from_version": "0.8.5",
+                "target_version": "0.8.6",
+                "observed_version": "0.8.6",
                 "action_id": "run_bundled_updater_v1",
                 "outcome": "success",
                 "stage": "verification",
@@ -635,7 +687,7 @@ class PublicBundleTests(unittest.TestCase):
                     "hook_event_name": "PostToolUse",
                     "tool_name": "exec_command",
                     "tool_input": {
-                        "cmd": "python scripts/client_update.py --client codex --target 0.8.5 "
+                        "cmd": "python scripts/client_update.py --client codex --target 0.8.6 "
                         "--action-id run_bundled_updater_v1"
                     },
                     "tool_response": {
@@ -667,7 +719,7 @@ class PublicBundleTests(unittest.TestCase):
             )
             self.assertEqual(duplicate["decision"], "block")
             state = json.loads(lifecycle_state_path(state_dir).read_text(encoding="utf-8"))
-            self.assertEqual(state["update_target_version"], "0.8.5")
+            self.assertEqual(state["update_target_version"], "0.8.6")
             self.assertTrue(state["update_prompted"])
             self.assertTrue(state["update_attempted"])
             self.assertTrue(state["update_reported"])
@@ -699,12 +751,21 @@ class PublicBundleTests(unittest.TestCase):
                 state_dir, {"hook_event_name": "UserPromptSubmit", "prompt": "同意"}
             )
             self.assertIn(
-                "grant --accept", agreement["hookSpecificOutput"]["additionalContext"]
+                "knowledge_outbox.py grant --accept 同意",
+                agreement["hookSpecificOutput"]["additionalContext"],
             )
+            self.assertFalse((state_dir / "consent.json").exists())
+            before_grant = json.loads(
+                lifecycle_state_path(state_dir).read_text(encoding="utf-8")
+            )
+            self.assertTrue(before_grant["agreement_reply_seen"])
+            self.assertFalse(before_grant["consent_granted"])
+
+            persist_consent(state_dir)
+            invoke_lifecycle_hook(state_dir, consent_tool_event(True, grant=True))
             first_stop = invoke_lifecycle_hook(state_dir, {"hook_event_name": "Stop"})
             self.assertEqual(first_stop["decision"], "block")
 
-            invoke_lifecycle_hook(state_dir, consent_tool_event(True, grant=True))
             one_query_reminder = invoke_lifecycle_hook(
                 state_dir,
                 {
@@ -732,6 +793,7 @@ class PublicBundleTests(unittest.TestCase):
                     "create_attempted",
                     "create_succeeded",
                     "query_attempted",
+                    "query_result_count",
                     "queried_task_hash",
                     "knowledge_outcome",
                     "candidate_attempt_count",
@@ -762,7 +824,7 @@ class PublicBundleTests(unittest.TestCase):
 
             task_id = "task-private-value-must-not-be-stored"
             private_fragment_text = "private fragment text must not be stored"
-            invoke_lifecycle_hook(
+            query_result = invoke_lifecycle_hook(
                 state_dir,
                 {
                     "hook_event_name": "PostToolUse",
@@ -774,11 +836,15 @@ class PublicBundleTests(unittest.TestCase):
                             "gateway_version": "knowledge-v1",
                             "task": {"task_id": task_id},
                             "fragments": [
-                                {"fragment_id": "opaque", "summary": private_fragment_text}
+                                valid_fragment("opaque", summary=private_fragment_text)
                             ],
                         },
                     },
                 },
+            )
+            self.assertIn(
+                "知识库：检索返回1条",
+                query_result["hookSpecificOutput"]["additionalContext"],
             )
             closed = invoke_lifecycle_hook(
                 state_dir,
@@ -789,6 +855,7 @@ class PublicBundleTests(unittest.TestCase):
             state_text = lifecycle_state_path(state_dir).read_text(encoding="utf-8")
             state = json.loads(state_text)
             self.assertEqual(state["knowledge_outcome"], "usage_recorded")
+            self.assertEqual(state["query_result_count"], 1)
             self.assertFalse(state["jl_task_active"])
             self.assertEqual(len(state["queried_task_hash"]), 64)
             self.assertNotIn(task_id, state_text)
@@ -799,32 +866,49 @@ class PublicBundleTests(unittest.TestCase):
             state_dir = Path(temporary)
             invoke_lifecycle_hook(
                 state_dir,
-                {"hook_event_name": "UserPromptSubmit", "prompt": "排查 AC701N ANC 切换问题"},
+                {
+                    "session_id": "first-session",
+                    "hook_event_name": "UserPromptSubmit",
+                    "prompt": "排查 AC701N ANC 切换问题",
+                },
             )
-            invoke_lifecycle_hook(state_dir, consent_tool_event(True, grant=True))
-            first_task_id = "first-task"
             invoke_lifecycle_hook(
                 state_dir,
                 {
-                    "hook_event_name": "PostToolUse",
-                    "tool_name": "mcp__server__query_task_fragments",
-                    "tool_input": {"task_id": first_task_id},
-                    "tool_response": {
-                        "structuredContent": {
-                            "task": {"task_id": first_task_id},
-                            "fragments": [],
-                        }
-                    },
+                    "session_id": "first-session",
+                    "hook_event_name": "UserPromptSubmit",
+                    "prompt": "同意",
                 },
+            )
+            persist_consent(state_dir)
+            invoke_lifecycle_hook(
+                state_dir,
+                {
+                    "session_id": "first-session",
+                    **consent_tool_event(True, grant=True),
+                },
+            )
+            first_task_id = "first-task"
+            first_query = {
+                **query_tool_event(first_task_id),
+                "session_id": "first-session",
+            }
+            invoke_lifecycle_hook(
+                state_dir,
+                first_query,
             )
             self.assertNotIn(
                 "decision",
-                invoke_lifecycle_hook(state_dir, {"hook_event_name": "Stop"}),
+                invoke_lifecycle_hook(
+                    state_dir,
+                    {"session_id": "first-session", "hook_event_name": "Stop"},
+                ),
             )
 
             second_prompt = invoke_lifecycle_hook(
                 state_dir,
                 {
+                    "session_id": "second-session",
                     "hook_event_name": "UserPromptSubmit",
                     "prompt": "再帮我处理杰理耳机通透模式底噪",
                 },
@@ -833,13 +917,30 @@ class PublicBundleTests(unittest.TestCase):
                 "Classify the request as a feature or issue",
                 second_prompt["hookSpecificOutput"]["additionalContext"],
             )
-            invoke_lifecycle_hook(state_dir, consent_tool_event(True))
+            self.assertIn(
+                "current global consent receipt is already loaded",
+                second_prompt["hookSpecificOutput"]["additionalContext"],
+            )
             state = json.loads(
-                lifecycle_state_path(state_dir).read_text(encoding="utf-8")
+                lifecycle_state_path(state_dir, "second-session").read_text(encoding="utf-8")
             )
             self.assertTrue(state["consent_granted"])
             self.assertFalse(state["agreement_reply_seen"])
             self.assertIsNone(state["knowledge_outcome"])
+
+    def test_hook_does_not_accept_a_grant_receipt_before_the_exact_reply(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            state_dir = Path(temporary)
+            invoke_lifecycle_hook(
+                state_dir,
+                {"hook_event_name": "UserPromptSubmit", "prompt": "排查杰理 SDK 问题"},
+            )
+            invoke_lifecycle_hook(state_dir, consent_tool_event(True, grant=True))
+            state = json.loads(
+                lifecycle_state_path(state_dir).read_text(encoding="utf-8")
+            )
+            self.assertFalse(state["agreement_reply_seen"])
+            self.assertFalse(state["consent_granted"])
 
     def test_hook_does_not_reuse_an_outcome_from_a_different_server_task(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -858,7 +959,7 @@ class PublicBundleTests(unittest.TestCase):
             self.assertEqual(allowed, {})
             invoke_lifecycle_hook(
                 state_dir,
-                query_tool_event("first-task", [{"fragment_id": "one"}]),
+                query_tool_event("first-task", [valid_fragment()]),
             )
             duplicate = invoke_lifecycle_hook(
                 state_dir,
@@ -882,7 +983,7 @@ class PublicBundleTests(unittest.TestCase):
             )
             invoke_lifecycle_hook(state_dir, consent_tool_event(True))
             task_id = "current-task-id"
-            invoke_lifecycle_hook(
+            no_match = invoke_lifecycle_hook(
                 state_dir,
                 {
                     "hook_event_name": "PostToolUse",
@@ -903,6 +1004,10 @@ class PublicBundleTests(unittest.TestCase):
                         ]
                     },
                 },
+            )
+            self.assertIn(
+                "知识库：无匹配",
+                no_match["hookSpecificOutput"]["additionalContext"],
             )
             self.assertEqual(
                 json.loads(state_path.read_text(encoding="utf-8"))["knowledge_outcome"],
@@ -942,12 +1047,25 @@ class PublicBundleTests(unittest.TestCase):
                 {"hook_event_name": "UserPromptSubmit", "prompt": "排查杰理 SDK 问题"},
             )
             invoke_lifecycle_hook(state_dir, consent_tool_event(True))
+            result: dict[str, object] = {}
             for response in (
                 {"isError": True, "structuredContent": {"fragments": []}},
                 {"structuredContent": {"ok": False, "fragments": []}},
                 {"structuredContent": {"task": {"task_id": "other"}, "fragments": []}},
+                {
+                    "structuredContent": {
+                        "task": {"task_id": "expected"},
+                        "fragments": [{"fragment_id": "missing-content-structure"}],
+                    }
+                },
+                {
+                    "structuredContent": {
+                        "task": {"task_id": "expected"},
+                        "fragments": [None],
+                    }
+                },
             ):
-                invoke_lifecycle_hook(
+                result = invoke_lifecycle_hook(
                     state_dir,
                     {
                         "hook_event_name": "PostToolUse",
@@ -956,6 +1074,10 @@ class PublicBundleTests(unittest.TestCase):
                         "tool_response": response,
                     },
                 )
+            self.assertIn(
+                "知识库：不可用",
+                result["hookSpecificOutput"]["additionalContext"],
+            )
             first_stop = invoke_lifecycle_hook(state_dir, {"hook_event_name": "Stop"})
             second_stop = invoke_lifecycle_hook(
                 state_dir, {"hook_event_name": "Stop", "stop_hook_active": True}
@@ -1070,7 +1192,7 @@ class PublicBundleTests(unittest.TestCase):
             )
             invoke_lifecycle_hook(
                 state_dir,
-                query_tool_event("bounded-task", [{"fragment_id": "one"}]),
+                query_tool_event("bounded-task", [valid_fragment()]),
             )
             duplicate_query = invoke_lifecycle_hook(
                 state_dir, pre_tool_event("query_task_fragments", query_input)
@@ -1165,6 +1287,7 @@ class PublicBundleTests(unittest.TestCase):
     def test_release_has_one_version_name_and_candidate_area(self) -> None:
         text = distribution_text()
         self.assertNotIn("0.7.0", text)
+        self.assertNotIn("0.8.4", text)
         self.assertNotIn("candidate_" + "library", text)
         self.assertNotIn("jl-private-knowledge", text.replace("jl-private-knowledge-client", ""))
         self.assertIn('"layer": "candidate_area"', text)
@@ -1177,11 +1300,11 @@ class PublicBundleTests(unittest.TestCase):
             self.assertEqual(set(payload["mcpServers"]), {MCP_NAME})
         self.assertEqual(
             json.loads(MANIFEST.read_text(encoding="utf-8"))["version"],
-            "0.8.4",
+            "0.8.5",
         )
         self.assertEqual(
             json.loads(ZCODE_MANIFEST.read_text(encoding="utf-8"))["version"],
-            "0.8.4",
+            "0.8.5",
         )
 
     def test_node_python_launcher_handles_chinese_space_and_exclamation_path(self) -> None:
@@ -1229,7 +1352,7 @@ class PublicBundleTests(unittest.TestCase):
             task_id = "revision-task"
             invoke_lifecycle_hook(
                 state_dir,
-                query_tool_event(task_id, [{"fragment_id": "one"}]),
+                query_tool_event(task_id, [valid_fragment()]),
             )
             invoke_lifecycle_hook(
                 state_dir,
@@ -1312,7 +1435,7 @@ class PublicBundleTests(unittest.TestCase):
             invoke_lifecycle_hook(state_dir, consent_tool_event(True))
             invoke_lifecycle_hook(
                 state_dir,
-                query_tool_event("supplemental-task", [{"fragment_id": "one"}]),
+                query_tool_event("supplemental-task", [valid_fragment()]),
             )
             before = json.loads(lifecycle_state_path(state_dir).read_text(encoding="utf-8"))
             invoke_lifecycle_hook(
@@ -1352,7 +1475,7 @@ class PublicBundleTests(unittest.TestCase):
                 state_dir,
                 {
                     "session_id": "session-a",
-                    **query_tool_event("session-a-task", [{"fragment_id": "one"}]),
+                    **query_tool_event("session-a-task", [valid_fragment()]),
                 },
             )
             state_a = json.loads(
@@ -1363,7 +1486,8 @@ class PublicBundleTests(unittest.TestCase):
             )
             self.assertEqual(state_a["knowledge_outcome"], "usage_recorded")
             self.assertIsNone(state_b["knowledge_outcome"])
-            self.assertFalse(state_b["consent_checked"])
+            self.assertTrue(state_b["consent_checked"])
+            self.assertFalse(state_b["consent_granted"])
 
     def test_gemini_event_names_and_llm_content_envelope_are_supported(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -1382,7 +1506,12 @@ class PublicBundleTests(unittest.TestCase):
                     "tool_name": "run_shell_command",
                     "tool_input": {"command": "python scripts/knowledge_outbox.py status"},
                     "tool_response": {
-                        "llmContent": json.dumps({"consent_granted": True})
+                        "llmContent": json.dumps(
+                            {
+                                "consent_granted": True,
+                                "disclosure_version": "2026-08-31-v2",
+                            }
+                        )
                     },
                 },
             )
@@ -1394,7 +1523,7 @@ class PublicBundleTests(unittest.TestCase):
                 state_dir,
                 query_tool_event(
                     "gemini-task",
-                    [{"fragment_id": "one"}],
+                    [valid_fragment()],
                     event_name="AfterTool",
                     gemini_envelope=True,
                 ),

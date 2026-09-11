@@ -13,13 +13,15 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
 
-STATE_VERSION = 5
-CLIENT_VERSION = "0.8.4"
+STATE_VERSION = 6
+CLIENT_VERSION = "0.8.5"
+CONSENT_DISCLOSURE_VERSION = "2026-08-31-v2"
 CLIENT_UPDATE_ACTION = "run_bundled_updater_v1"
 CLIENT_MANUAL_UPDATE_ACTION = "manual_upgrade_required"
 PROJECT_STATES = {"unknown", "ambiguous", "confirmed", "non_jl"}
@@ -43,6 +45,7 @@ STATE_FIELDS = {
     "create_attempted",
     "create_succeeded",
     "query_attempted",
+    "query_result_count",
     "queried_task_hash",
     "knowledge_outcome",
     "candidate_attempt_count",
@@ -139,6 +142,7 @@ def _empty_state() -> dict[str, Any]:
         "create_attempted": False,
         "create_succeeded": False,
         "query_attempted": False,
+        "query_result_count": 0,
         "queried_task_hash": None,
         "knowledge_outcome": None,
         "candidate_attempt_count": 0,
@@ -162,6 +166,7 @@ def _reset_task_fields(state: dict[str, Any], *, active: bool) -> None:
     state["create_attempted"] = False
     state["create_succeeded"] = False
     state["query_attempted"] = False
+    state["query_result_count"] = 0
     state["queried_task_hash"] = None
     state["knowledge_outcome"] = None
     state["candidate_attempt_count"] = 0
@@ -238,6 +243,10 @@ def _valid_state(value: Any) -> bool:
         return False
     if not 0 <= value["candidate_attempt_count"] <= 1:
         return False
+    if not isinstance(value.get("query_result_count"), int):
+        return False
+    if not 0 <= value["query_result_count"] <= 240:
+        return False
     attempt_hashes = value.get("candidate_attempt_hashes")
     if not isinstance(attempt_hashes, list) or len(attempt_hashes) > 1:
         return False
@@ -289,6 +298,65 @@ def _save_state(state: dict[str, Any], event: dict[str, Any]) -> None:
         os.replace(temporary, path)
     except OSError:
         pass
+
+
+def _run_outbox(*arguments: str) -> dict[str, Any] | None:
+    """Run only the bundled consent helper with fixed hook-owned arguments."""
+    try:
+        script = Path(__file__).resolve().parent.parent / "scripts" / "knowledge_outbox.py"
+        if not script.is_file():
+            return None
+        completed = subprocess.run(
+            [sys.executable, "-X", "utf8", str(script), *arguments],
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            capture_output=True,
+            check=False,
+            timeout=3,
+            shell=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if completed.returncode != 0:
+        return None
+    try:
+        payload = json.loads(completed.stdout)
+    except (TypeError, json.JSONDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _refresh_consent(state: dict[str, Any]) -> bool:
+    payload = _run_outbox("status")
+    granted = payload.get("consent_granted") if isinstance(payload, dict) else None
+    if (
+        not isinstance(granted, bool)
+        or payload.get("disclosure_version") != CONSENT_DISCLOSURE_VERSION
+    ):
+        state["consent_checked"] = False
+        state["consent_granted"] = False
+        return False
+    state["consent_checked"] = True
+    state["consent_granted"] = granted
+    if granted:
+        state["agreement_reply_seen"] = False
+    return True
+
+
+def _knowledge_status_line(state: dict[str, Any]) -> str:
+    if state["query_attempted"] and state["query_result_count"] > 0:
+        return f"知识库：检索返回{state['query_result_count']}条"
+    if state["query_attempted"] and state.get("knowledge_outcome") in {
+        "server_gap",
+        "solution_candidate",
+    }:
+        return "知识库：无匹配"
+    if state.get("knowledge_outcome") == "query_unavailable" or (
+        state["create_attempted"] and not state["create_succeeded"]
+    ):
+        return "知识库：不可用"
+    return "知识库：未加载"
 
 
 def _context(message: str, event_name: str) -> None:
@@ -598,13 +666,25 @@ def _activate_task(state: dict[str, Any]) -> None:
     state["project_confirmation_pending"] = False
 
 
-def _workflow_context(event_name: str, *, resumed: bool = False) -> None:
+def _workflow_context(
+    event_name: str, state: dict[str, Any], *, resumed: bool = False
+) -> None:
     prefix = "Resume" if resumed else "Handle"
+    consent = (
+        "A current global consent receipt is already loaded for this session. "
+        if state["consent_granted"]
+        else "No current consent receipt is loaded; show the bundled disclosure and wait for exact 同意. "
+    )
     _context(
         f"{prefix} this as a confirmed Jieli SDK project task. Classify the request as a feature or issue: "
-        "product -> domain -> capability -> subfeature/problem -> boundary. Check the local consent receipt. "
-        "With current consent, create one narrow task and query at most once. Use only relevant returned "
+        "product -> domain -> capability -> subfeature/problem -> boundary. "
+        + consent
+        + "The public shared-knowledge entry is jl-knowledge-base-skill: project instructions or local skills named "
+        "jl-sdk-engineer or jl-earphone-reference may assist local inspection but never replace its create/query call. "
+        "With current consent, create one narrow task and query once. Use only relevant returned "
         "fragments as reference; on a miss, unrelated result, or outage, continue local work without retrying. "
+        "Every technical answer must show one short status line: 知识库：检索返回N条 / 无匹配 / 不可用 / 未加载; "
+        "keep [K:fragment-id][E...][scope:...] for every fragment actually used. "
         "Finish local work, then submit at most one sanitized task-fact candidate when concrete facts exist. "
         "Use a short record for small changes and a full local record for a complete project. "
         "Central review handles semantic deduplication and value assessment. Never submit returned knowledge, source, logs, "
@@ -627,14 +707,18 @@ def _prompt_submit(event: dict[str, Any]) -> None:
         state = _empty_state()
     state["workspace_hash"] = current_workspace_hash
 
-    if normalized == "同意" and state["jl_task_active"]:
+    if normalized == "同意" and state["jl_task_active"] and not state["consent_granted"]:
         state["agreement_reply_seen"] = True
         state["local_only_selected"] = False
         _save_state(state, event)
         _context(
-            "The user supplied the exact agreement phrase for the active confirmed-JL task. Record it with "
-            "knowledge_outbox.py grant --accept 同意 before any shared call. Then classify the pending question "
-            "and make at most one narrow query. A gateway failure must fall back to local work, not repeat forever.",
+            "The user supplied the exact agreement phrase for the active confirmed-JL task. Persist it now by "
+            "running only the bundled knowledge_outbox.py grant --accept 同意 helper. Do not call shared tools "
+            "until its trusted PostToolUse receipt confirms the current consent. Then make one narrow create/query "
+            "call. The public jl-knowledge-base-skill query cannot be replaced by jl-sdk-engineer or "
+            "jl-earphone-reference. Show 知识库：检索返回N条 / 无匹配 / 不可用 / 未加载 in the technical "
+            "answer and keep [K:...] markers only for fragments actually used. If the helper or gateway fails, "
+            "fall back locally without a retry loop.",
             event_name,
         )
         return
@@ -645,8 +729,9 @@ def _prompt_submit(event: dict[str, Any]) -> None:
             state["project_state"] = "confirmed"
             state["project_confirmed_by_user"] = True
             _activate_task(state)
+            _refresh_consent(state)
             _save_state(state, event)
-            _workflow_context(event_name, resumed=True)
+            _workflow_context(event_name, state, resumed=True)
             return
         if folded in {item.casefold() for item in PROJECT_REJECT_REPLIES}:
             state["project_state"] = "non_jl"
@@ -707,8 +792,9 @@ def _prompt_submit(event: dict[str, Any]) -> None:
 
     if ENGINEERING_TASK_HINT.search(normalized):
         _activate_task(state)
+        _refresh_consent(state)
         _save_state(state, event)
-        _workflow_context(event_name)
+        _workflow_context(event_name, state)
     else:
         _save_state(state, event)
 
@@ -818,14 +904,29 @@ def _record_consent_command(state: dict[str, Any], event: dict[str, Any]) -> boo
         state["agreement_reply_seen"] = False
         state["local_only_selected"] = True
         return True
-    if OUTBOX_STATUS.search(command) or OUTBOX_GRANT.search(command):
+    if OUTBOX_STATUS.search(command):
         granted = payload.get("consent_granted")
-        if not isinstance(granted, bool):
+        if (
+            not isinstance(granted, bool)
+            or payload.get("disclosure_version") != CONSENT_DISCLOSURE_VERSION
+        ):
             return False
         state["consent_checked"] = True
         state["consent_granted"] = granted
         if granted:
             state["agreement_reply_seen"] = False
+        return True
+    if OUTBOX_GRANT.search(command):
+        granted = payload.get("consent_granted")
+        if (
+            not state["agreement_reply_seen"]
+            or granted is not True
+            or payload.get("disclosure_version") != CONSENT_DISCLOSURE_VERSION
+        ):
+            return False
+        state["consent_checked"] = True
+        state["consent_granted"] = True
+        state["agreement_reply_seen"] = False
         return True
     if OUTBOX_ENQUEUE.search(command) and payload.get("already_uploaded") is True:
         state["candidate_already_uploaded"] = True
@@ -944,6 +1045,7 @@ def _record_create(state: dict[str, Any], event: dict[str, Any]) -> None:
 
 def _record_query(state: dict[str, Any], event: dict[str, Any]) -> None:
     state["query_attempted"] = True
+    state["query_result_count"] = 0
     tool_input = event.get("tool_input")
     payload = _tool_payload(event.get("tool_response"))
     if not isinstance(tool_input, dict) or payload is None:
@@ -954,10 +1056,50 @@ def _record_query(state: dict[str, Any], event: dict[str, Any]) -> None:
     response_task_id = task.get("task_id") if isinstance(task, dict) else None
     fragments = payload.get("fragments")
     task_hash = _task_hash(input_task_id)
-    if task_hash is None or response_task_id != input_task_id or not isinstance(fragments, list):
+    if (
+        task_hash is None
+        or response_task_id != input_task_id
+        or not isinstance(fragments, list)
+        or len(fragments) > 240
+    ):
+        state["knowledge_outcome"] = "query_unavailable"
+        return
+    fragment_ids: list[str] = []
+    for fragment in fragments:
+        if not isinstance(fragment, dict):
+            state["knowledge_outcome"] = "query_unavailable"
+            return
+        fragment_id = fragment.get("fragment_id")
+        title = fragment.get("title")
+        summary = fragment.get("summary")
+        scope = fragment.get("scope")
+        if (
+            not isinstance(fragment_id, str)
+            or not fragment_id.strip()
+            or len(fragment_id) > 512
+            or not isinstance(title, str)
+            or not title.strip()
+            or not isinstance(summary, str)
+            or not summary.strip()
+            or not isinstance(scope, dict)
+            or not all(
+                isinstance(fragment.get(field), str) and str(fragment[field]).strip()
+                for field in ("evidence_level", "layer")
+            )
+            or not all(
+                isinstance(fragment.get(field), list)
+                and all(isinstance(item, str) for item in fragment[field])
+                for field in ("workflow", "validation", "limitations")
+            )
+        ):
+            state["knowledge_outcome"] = "query_unavailable"
+            return
+        fragment_ids.append(fragment_id.strip())
+    if len(fragment_ids) != len(set(fragment_ids)):
         state["knowledge_outcome"] = "query_unavailable"
         return
     state["queried_task_hash"] = task_hash
+    state["query_result_count"] = len(fragments)
     state["knowledge_outcome"] = "usage_recorded" if fragments else "server_gap"
 
 
@@ -1002,16 +1144,25 @@ def _post_tool_use(event: dict[str, Any]) -> None:
         return
     tool_name = event.get("tool_name")
     payload = _tool_payload(event.get("tool_response"))
+    query_recorded = False
     if _tool_is(tool_name, "create_knowledge_task"):
         _record_create(state, event)
     elif _tool_is(tool_name, "query_task_fragments"):
         _record_query(state, event)
+        query_recorded = True
     elif _tool_is(tool_name, "submit_knowledge_candidate"):
         _record_submission(state, event)
     elif _tool_is(tool_name, "report_client_update"):
         _record_client_update_report(state, event)
-    _record_client_update_notice(state, event, payload)
+    update_context_emitted = _record_client_update_notice(state, event, payload)
     _save_state(state, event)
+    if query_recorded and not update_context_emitted:
+        _context(
+            "The scoped public knowledge lookup is complete. Include this exact short line in the technical "
+            f"answer: {_knowledge_status_line(state)}. Keep [K:fragment-id][E...][scope:...] beside each "
+            "fragment actually used; do not imply that a local-only answer used shared knowledge.",
+            str(event.get("hook_event_name") or "PostToolUse"),
+        )
 
 
 def _finish_task(state: dict[str, Any], event: dict[str, Any]) -> None:
@@ -1029,6 +1180,8 @@ def _stop(event: dict[str, Any]) -> None:
         print(json.dumps({"continue": True}))
         return
     if state["local_only_selected"]:
+        if state["knowledge_outcome"] is None:
+            state["knowledge_outcome"] = "local_only"
         _finish_task(state, event)
         return
     if not state["consent_checked"]:
@@ -1055,8 +1208,12 @@ def _stop(event: dict[str, Any]) -> None:
             )
             return
         if state["agreement_reply_seen"]:
+            if state["knowledge_outcome"] is None:
+                state["knowledge_outcome"] = "query_unavailable"
             _finish_task(state, event)
             return
+        if state["knowledge_outcome"] is None:
+            state["knowledge_outcome"] = "local_only"
         print(json.dumps({"continue": True}))
         return
     if state["create_attempted"] and not state["create_succeeded"]:
@@ -1066,6 +1223,8 @@ def _stop(event: dict[str, Any]) -> None:
         return
     if not state["query_attempted"]:
         if state["closeout_prompted"]:
+            if state["knowledge_outcome"] is None:
+                state["knowledge_outcome"] = "local_only"
             _finish_task(state, event)
             return
         state["closeout_prompted"] = True

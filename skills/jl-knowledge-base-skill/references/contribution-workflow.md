@@ -51,7 +51,7 @@ Do not process old pending entries during ordinary question answering or read-on
 For each entry:
 
 1. Obtain a narrow server-issued task if the current JL task has no suitable live `task_id`. Do not save a task ID in the outbox.
-2. Call `submit_knowledge_candidate` with `task_id`, `candidate`, `client_version: "0.8.4"`, and `idempotency_key` equal to the outbox entry `id`.
+2. Call `submit_knowledge_candidate` with `task_id`, `candidate`, `client_version: "0.8.5"`, and `idempotency_key` equal to the outbox entry `id`.
 3. Only after `status: queued_for_review`, remove it:
 
 ```text
@@ -82,7 +82,7 @@ Synchronization retries are best effort and must never roll back, delay, or reop
 
 ## Bounded task closeout
 
-At the end of a confirmed JL task, keep one bounded outcome: a successful non-empty query is **usage recorded**; a successful empty query is **server gap**; a failed/malformed/unavailable call is **query unavailable**; no shared access is **local only**; and an accepted task-fact submission is **solution candidate**. The candidate may replace the query outcome, but later reads, edits, builds, or answer wording do not create another required closeout. The hook may remind the model once if it omitted the consent check or one query, then it allows local completion. Every create, query, and submit payload includes `client_version: "0.8.4"`.
+At the end of a confirmed JL task, keep one bounded outcome: a successful non-empty query is **usage recorded**; a successful empty query is **server gap**; a failed/malformed/unavailable call is **query unavailable**; no shared access is **local only**; and an accepted task-fact submission is **solution candidate**. The candidate may replace the query outcome, but later reads, edits, builds, or answer wording do not create another required closeout. The hook may remind the model once if it omitted the consent check or one query, then it allows local completion. Every create, query, and submit payload includes `client_version: "0.8.5"`.
 
 ## Candidate shape
 

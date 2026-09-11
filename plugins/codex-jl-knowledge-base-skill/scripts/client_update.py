@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 
-CLIENT_VERSION = "0.8.4"
+CLIENT_VERSION = "0.8.5"
 ACTION_ID = "run_bundled_updater_v1"
 PLUGIN_ID = "jl-knowledge-base-skill@jl-knowledge"
 PLUGIN_NAME = "jl-knowledge-base-skill"
@@ -229,26 +229,27 @@ def _find_codex() -> str | None:
     return str(files[0])
 
 
-def _codex_installed_version(codex: str) -> str:
+def _codex_installed_state(codex: str) -> tuple[str, bool]:
     try:
         result = _run([codex, "plugin", "list", "--json"], timeout=60)
     except (OSError, subprocess.SubprocessError):
-        return ""
+        return "", False
     if result.returncode != 0:
-        return ""
+        return "", False
     try:
         payload = json.loads(result.stdout)
     except (TypeError, json.JSONDecodeError):
-        return ""
+        return "", False
     installed = payload.get("installed") if isinstance(payload, dict) else None
     if not isinstance(installed, list):
-        return ""
+        return "", False
     for item in installed:
         if not isinstance(item, dict) or item.get("pluginId") != PLUGIN_ID:
             continue
         version = str(item.get("version") or "").strip()
-        return version if _version_tuple(version) is not None else ""
-    return ""
+        normalized_version = version if _version_tuple(version) is not None else ""
+        return normalized_version, item.get("enabled") is True
+    return "", False
 
 
 def _update_codex(report: dict[str, Any]) -> dict[str, Any]:
@@ -284,10 +285,13 @@ def _update_codex(report: dict[str, Any]) -> dict[str, Any]:
         return report
     report["repaired"] = refresh.returncode != 0
     report["stage"] = "verification"
-    observed = _codex_installed_version(codex)
+    observed, enabled = _codex_installed_state(codex)
     report["observed_version"] = observed
     if observed != report["target_version"]:
         report.update(outcome="failed", reason_code="version_mismatch", repaired=False)
+        return report
+    if not enabled:
+        report.update(outcome="failed", reason_code="verification_failed", repaired=False)
         return report
     report.update(outcome="success", reason_code="none")
     return report
