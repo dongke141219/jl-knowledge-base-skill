@@ -117,7 +117,7 @@ class ClientUpdateTests(unittest.TestCase):
     def test_same_target_is_attempted_once_during_the_retry_window(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             output = io.StringIO()
-            report = client_update._base_report("codex", "0.8.3")
+            report = client_update._base_report("codex", "0.8.4")
             report.update(outcome="failed", stage="plugin_install", reason_code="network_error")
             with mock.patch.object(client_update, "_state_dir", return_value=Path(temporary)), mock.patch.object(
                 client_update, "_run_update", return_value=report
@@ -128,7 +128,7 @@ class ClientUpdateTests(unittest.TestCase):
                             "--client",
                             "codex",
                             "--target",
-                            "0.8.3",
+                            "0.8.4",
                             "--action-id",
                             client_update.ACTION_ID,
                         ]
@@ -144,7 +144,7 @@ class ClientUpdateTests(unittest.TestCase):
                             "--client",
                             "codex",
                             "--target",
-                            "0.8.3",
+                            "0.8.4",
                             "--action-id",
                             client_update.ACTION_ID,
                         ]

@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 
-CLIENT_VERSION = "0.8.2"
+CLIENT_VERSION = "0.8.3"
 ACTION_ID = "run_bundled_updater_v1"
 PLUGIN_ID = "jl-knowledge-base-skill@jl-knowledge"
 PLUGIN_NAME = "jl-knowledge-base-skill"

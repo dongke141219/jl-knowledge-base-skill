@@ -100,6 +100,20 @@ WINDOWS_PATH_RE = re.compile(r"(?i)(?<![A-Za-z0-9])[A-Za-z]:[\\/]")
 UNC_PATH_RE = re.compile(r"\\\\[^\\\s]+\\[^\\\s]+")
 POSIX_PRIVATE_PATH_RE = re.compile(r"(?:^|\s)/(?:home|users|var|etc|mnt|volume|root|opt|tmp)/", re.I)
 DEEP_RELATIVE_PATH_RE = re.compile(r"(?:^|\s)(?:\.{0,2}/)?[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+){2,}")
+PRIVATE_SOURCE_PATH_RE = re.compile(
+    r"(?i)(?<![A-Za-z0-9_.-])(?:"
+    r"(?:[A-Za-z0-9_.-]+[/\\])*(?:private|clients?|customers?|projects?)(?:[-_.][A-Za-z0-9_.-]+)?[/\\][A-Za-z0-9_.-]+"
+    r"|(?:[A-Za-z0-9_.-]+[/\\])+(?:private|clients?|customers?|projects?)(?:[-_.][A-Za-z0-9_.-]+)?"
+    r")(?![A-Za-z0-9_.-])"
+)
+SDK_RELATIVE_LOCATOR_ROOTS = frozenset({
+    "sdk", "src", "source", "app", "apps", "include", "include_lib", "board", "cpu", "common",
+    "lib", "libs", "driver", "drivers", "system", "btstack", "btcontroller", "tools",
+})
+KNOWN_SDK_QUERY_IDENTIFIERS = frozenset({
+    "server_open", "server_close", "server_request", "server_req",
+    "server_max", "SERVER_REGISTER",
+})
 URL_RE = re.compile(r"(?i)\b(?:(?:[A-Z][A-Z0-9+.-]{1,15})://|www\.)")
 EMAIL_RE = re.compile(r"(?i)(?<![A-Z0-9._%+-])[A-Z0-9._%+-]+@[A-Z0-9.-]+(?![A-Z0-9._%+-])")
 IPV4_RE = re.compile(r"(?<![0-9])(?:[0-9]{1,3}\.){3}[0-9]{1,3}(?![0-9])")
@@ -114,7 +128,7 @@ HOSTNAME_RE = re.compile(
 LABELLED_HOST_RE = re.compile(
     r"(?i)\b(?:host|hostname|server|machine|device)[ _-]?(?:name|id)?\s*(?:[:=]|\bis\b)\s*[A-Z0-9._-]+"
 )
-BARE_HOST_RE = re.compile(r"(?i)\b(?:desktop|laptop|server|build|worker|runner|nas|win)[-_][A-Z0-9][A-Z0-9-]{1,62}\b")
+BARE_HOST_RE = re.compile(r"(?i)\b(?:desktop|laptop|server|build|worker|runner|nas|win)[-_][A-Z0-9][A-Z0-9_-]{1,62}\b")
 LOCALHOST_RE = re.compile(r"(?i)(?<![A-Z0-9_-])localhost(?![A-Z0-9_-])")
 NETWORK_TOKEN_RE = re.compile(r"(?<![A-Za-z0-9_.-])\[?[A-Za-z0-9:.%_-]{2,}\]?(?![A-Za-z0-9_.-])")
 SECRET_ASSIGNMENT_RE = re.compile(
@@ -128,7 +142,7 @@ RAW_LOG_RE = re.compile(
     r"(?i)(?:Traceback \(most recent call last\)|"
     r"\b(?:DEBUG|INFO|WARN|ERROR|FATAL)\s*\[[^\]]+\]|"
     r"\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\b|"
-    r"\b[A-Za-z0-9_.-]+\.(?:c|h|cc|cpp|s):\d+(?::\d+)?\b|"
+    r"\b[A-Za-z0-9_.-]+\.(?:c|h|cc|cpp|s):\d+(?::\d+)?:\s*(?:fatal\s+error|error|warning|note)\b|"
     r"\b(?:customer|client|company)[ _-]?(?:name|id)\s*[:=]|"
     r"(?:客户|公司)(?:名称|名字|ID|编号)\s*[:：=])"
 )
@@ -144,6 +158,49 @@ HEX_PAYLOAD_RE = re.compile(r"(?i)(?:(?<![0-9A-F])(?:[0-9A-F]{2})[\s,;:-]+){15,}
 
 class OutboxError(ValueError):
     """Expected input/state error that is safe to expose."""
+
+
+def _is_safe_sdk_locator_match(value: str, match: re.Match[str]) -> bool:
+    """Recognize reference locations, never arbitrary customer directories."""
+    locator = match.group().strip()
+    start = match.start() + len(match.group()) - len(match.group().lstrip())
+    if start and value[start - 1] in "/\\:":
+        return False
+    if match.end() < len(value) and value[match.end()] in "/\\":
+        return False
+    protocol_number = r"(?:0[xX][0-9A-Fa-f]{1,8}|[0-9A-F]{2}|[0-9A-F]{4}|[0-9]{1,5})"
+    if re.fullmatch(protocol_number + r"(?:/" + protocol_number + r")+", locator):
+        return True
+    parts = locator.split("/")
+    if not parts or parts[0].casefold() not in SDK_RELATIVE_LOCATOR_ROOTS:
+        return False
+    if any(part in {"", ".", ".."} for part in parts):
+        return False
+    if any(re.split(r"[-_.]", part.casefold(), maxsplit=1)[0] in {
+        "private", "client", "clients", "customer", "customers", "project", "projects",
+    } for part in parts):
+        return False
+    return True
+
+
+def _is_safe_sdk_symbol_match(value: str, match: re.Match[str]) -> bool:
+    symbol = match.group()
+    adjacent = "/\\:.-_"
+    if (match.start() and value[match.start() - 1] in adjacent) or (
+        match.end() < len(value) and value[match.end()] in adjacent
+    ):
+        return False
+    if symbol in KNOWN_SDK_QUERY_IDENTIFIERS:
+        return True
+    if "_" not in symbol or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", symbol):
+        return False
+    if re.fullmatch(r"[A-Z_][A-Z0-9_]*", symbol):
+        return True
+    return bool(
+        re.match(r"\s*\(", value[match.end():])
+        or re.search(r"(?:函数|宏|接口|\bAPI)\s*$", value[:match.start()])
+        or re.match(r"\s*(?:函数|宏|接口)", value[match.end():])
+    )
 
 
 def _contains_ip_address(value: str) -> bool:
@@ -336,6 +393,7 @@ def _validate_text(value: Any, field: str, max_length: int, *, allow_empty: bool
         WINDOWS_PATH_RE,
         UNC_PATH_RE,
         POSIX_PRIVATE_PATH_RE,
+        PRIVATE_SOURCE_PATH_RE,
         DEEP_RELATIVE_PATH_RE,
         URL_RE,
         EMAIL_RE,
@@ -354,7 +412,11 @@ def _validate_text(value: Any, field: str, max_length: int, *, allow_empty: bool
         HIGH_ENTROPY_RE,
         HEX_PAYLOAD_RE,
     ):
-        if pattern.search(cleaned):
+        for match in pattern.finditer(cleaned):
+            if pattern is DEEP_RELATIVE_PATH_RE and _is_safe_sdk_locator_match(cleaned, match):
+                continue
+            if pattern is BARE_HOST_RE and _is_safe_sdk_symbol_match(cleaned, match):
+                continue
             raise OutboxError(
                 f"{field} contains a forbidden identity, network identifier, path, log, key, or credential pattern."
             )

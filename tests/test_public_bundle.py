@@ -36,7 +36,7 @@ HOOK_SCRIPT = CODEX_PACKAGE / "hooks" / "jl_lifecycle.py"
 HOOK_NODE_LAUNCHER = CODEX_PACKAGE / "hooks" / "python-launcher.mjs"
 HOOK_WINDOWS_LAUNCHER = CODEX_PACKAGE / "hooks" / "run_jl_lifecycle.cmd"
 CLIENT_UPDATER = CODEX_PACKAGE / "scripts" / "client_update.py"
-PUBLIC_MCP_URL = "https://convicted-matthew-plates-scientific.trycloudflare.com/knowledge/mcp?client_version=0.8.2"
+PUBLIC_MCP_URL = "https://convicted-matthew-plates-scientific.trycloudflare.com/knowledge/mcp?client_version=0.8.3"
 MCP_NAME = "jl-knowledge-base"
 CONSENT_PHRASE = "同意"
 REVOCATION_PHRASE = "REVOKE_AND_DELETE_PENDING_CONTRIBUTIONS"
@@ -199,7 +199,7 @@ class PublicBundleTests(unittest.TestCase):
     def test_manifest_is_distribution_ready(self) -> None:
         payload = json.loads(MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(payload["name"], "jl-knowledge-base-skill")
-        self.assertEqual(payload["version"], "0.8.2")
+        self.assertEqual(payload["version"], "0.8.3")
         self.assertEqual(payload["skills"], "./skills/")
         self.assertEqual(payload["mcpServers"], "./.mcp.json")
         self.assertNotIn("hooks", payload)
@@ -219,7 +219,7 @@ class PublicBundleTests(unittest.TestCase):
     def test_gemini_extension_is_distribution_ready(self) -> None:
         payload = json.loads(GEMINI_MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(payload["name"], "jl-knowledge-base-skill")
-        self.assertEqual(payload["version"], "0.8.2")
+        self.assertEqual(payload["version"], "0.8.3")
         self.assertEqual(payload["contextFileName"], "GEMINI.md")
         server = payload["mcpServers"][MCP_NAME]
         self.assertEqual(server["httpUrl"], PUBLIC_MCP_URL)
@@ -252,7 +252,7 @@ class PublicBundleTests(unittest.TestCase):
     def test_zcode_plugin_and_marketplace_are_distribution_ready(self) -> None:
         payload = json.loads(ZCODE_MANIFEST.read_text(encoding="utf-8"))
         self.assertEqual(payload["name"], "jl-knowledge-base-skill")
-        self.assertEqual(payload["version"], "0.8.2")
+        self.assertEqual(payload["version"], "0.8.3")
         self.assertEqual(
             payload["commands"],
             ["commands/jl-implement.md", "commands/jl-diagnose.md"],
@@ -320,7 +320,7 @@ class PublicBundleTests(unittest.TestCase):
         for field in (
             '"contribution_consent"',
             '"contribution_consent_version"',
-            '"client_version": "0.8.2"',
+            '"client_version": "0.8.3"',
             '"2026-08-31-v2"',
             '"purpose"',
             '"allowed_tools"',
@@ -427,7 +427,7 @@ class PublicBundleTests(unittest.TestCase):
         self.assertIn("Python 3.10", gemini)
         self.assertIn("Python 3.10", skill)
         self.assertIn("knowledge_outbox.py grant --accept 同意", gemini)
-        self.assertIn('client_version: "0.8.2"', gemini)
+        self.assertIn('client_version: "0.8.3"', gemini)
         self.assertIn("GitHub Issues", readme)
         self.assertIn("Gitee Issues", readme)
         self.assertIn("经作者完成适配的其他客户端", privacy)
@@ -451,7 +451,7 @@ class PublicBundleTests(unittest.TestCase):
             'plugin marketplace upgrade jl-knowledge',
             'plugin add jl-knowledge-base-skill@jl-knowledge',
             'git config --global url."https://gitee.com/fofo123/jl-knowledge-base-skill.git".insteadOf',
-            "jl-knowledge-base-skill@jl-knowledge  installed, enabled  0.8.2",
+            "jl-knowledge-base-skill@jl-knowledge  installed, enabled  0.8.3",
             "Connection was reset",
             "原理图",
             "UI 交互文档",
@@ -481,7 +481,7 @@ class PublicBundleTests(unittest.TestCase):
             "Set-Alias CodexDesktop",
             "CodexDesktop plugin marketplace add",
             'git config --global url."https://gitee.com/fofo123/jl-knowledge-base-skill.git".insteadOf',
-            "jl-knowledge-base-skill@jl-knowledge  installed, enabled  0.8.2",
+            "jl-knowledge-base-skill@jl-knowledge  installed, enabled  0.8.3",
             "CodexDesktop 无法识别为 cmdlet",
             "Connection was reset",
             "完全退出",
@@ -600,12 +600,12 @@ class PublicBundleTests(unittest.TestCase):
             invoke_lifecycle_hook(state_dir, consent_tool_event(True))
             create_event = create_tool_event("update-task")
             create_event["tool_response"]["structuredContent"]["client_update"] = {
-                "current_version": "0.8.2",
+                "current_version": "0.8.3",
                 "minimum_version": "0.7.1",
-                "latest_version": "0.8.3",
+                "latest_version": "0.8.4",
                 "update_available": True,
                 "required": False,
-                "automatic_update_supported_from": "0.8.2",
+                "automatic_update_supported_from": "0.8.3",
                 "automatic_update_eligible": True,
                 "action_id": "run_bundled_updater_v1",
                 "report_tool": "report_client_update",
@@ -617,12 +617,12 @@ class PublicBundleTests(unittest.TestCase):
                 notice["hookSpecificOutput"]["additionalContext"],
             )
             report = {
-                "client_version": "0.8.2",
+                "client_version": "0.8.3",
                 "attempt_id": "a" * 32,
                 "client_kind": "codex",
-                "from_version": "0.8.2",
-                "target_version": "0.8.3",
-                "observed_version": "0.8.3",
+                "from_version": "0.8.3",
+                "target_version": "0.8.4",
+                "observed_version": "0.8.4",
                 "action_id": "run_bundled_updater_v1",
                 "outcome": "success",
                 "stage": "verification",
@@ -635,7 +635,7 @@ class PublicBundleTests(unittest.TestCase):
                     "hook_event_name": "PostToolUse",
                     "tool_name": "exec_command",
                     "tool_input": {
-                        "cmd": "python scripts/client_update.py --client codex --target 0.8.3 "
+                        "cmd": "python scripts/client_update.py --client codex --target 0.8.4 "
                         "--action-id run_bundled_updater_v1"
                     },
                     "tool_response": {
@@ -667,7 +667,7 @@ class PublicBundleTests(unittest.TestCase):
             )
             self.assertEqual(duplicate["decision"], "block")
             state = json.loads(lifecycle_state_path(state_dir).read_text(encoding="utf-8"))
-            self.assertEqual(state["update_target_version"], "0.8.3")
+            self.assertEqual(state["update_target_version"], "0.8.4")
             self.assertTrue(state["update_prompted"])
             self.assertTrue(state["update_attempted"])
             self.assertTrue(state["update_reported"])
@@ -1177,11 +1177,11 @@ class PublicBundleTests(unittest.TestCase):
             self.assertEqual(set(payload["mcpServers"]), {MCP_NAME})
         self.assertEqual(
             json.loads(MANIFEST.read_text(encoding="utf-8"))["version"],
-            "0.8.2",
+            "0.8.3",
         )
         self.assertEqual(
             json.loads(ZCODE_MANIFEST.read_text(encoding="utf-8"))["version"],
-            "0.8.2",
+            "0.8.3",
         )
 
     def test_node_python_launcher_handles_chinese_space_and_exclamation_path(self) -> None:
@@ -1686,6 +1686,61 @@ class OutboxTests(unittest.TestCase):
         status = self.run_outbox("status")
         self.assertFalse(status["consent_granted"])
         self.assertEqual(status["pending_count"], 0)
+
+    def test_privacy_guard_allows_sdk_locations_symbols_and_short_protocol_values(self) -> None:
+        self.grant()
+        summaries = (
+            "Check apps/earphone/user/key_event.c and file.c:128 before changing key behavior.",
+            "Inspect include_lib/btstack/avctp_user.h only after confirming the public SDK layout.",
+            "Known SDK API server_open, server_request and SERVER_REGISTER identify the service entry.",
+            "Trace server_custom_handler() then inspect the BUILD_TABLE_ENABLE macro.",
+            "函数 server_custom_handler 对应控制入口，宏 BUILD_TABLE_ENABLE 决定功能开关。",
+            "Protocol services use 0xAE30/0xAE03/0xAE04 with commands 0/1/2 and bytes [0x01, 0x02, 0x03].",
+            "Charge levels 10/20/30/40 and states 0/1/2 are protocol constants, pending hardware verification.",
+        )
+        for summary in summaries:
+            with self.subTest(summary=summary):
+                candidate = self.candidate()
+                candidate["summary"] = summary
+                receipt = self.enqueue(candidate)
+                self.assertTrue(receipt["queued"])
+        self.assertEqual(len(summaries), self.run_outbox("status")["pending_count"])
+
+    def test_safe_sdk_reference_does_not_exempt_other_private_content(self) -> None:
+        self.grant()
+        prohibited = (
+            "apps/private/key_event.c",
+            "apps/earphone/customer/config.c",
+            "apps/customer-order-103/config.c",
+            "apps/earphone/client_project.h:128",
+            "apps/earphone/client.c:128",
+            "src/project/settings.h",
+            "private/board.c",
+            "customer/board.c:128",
+            "apps/../secret/board.c",
+            "device/private/board.c",
+            "machine " + "BUILD-WORKER-07",
+            "password" + "=not-a-real-value",
+            "Contact " + "engineer" + "@" + "example.com",
+            "Contact " + "138" + "0013" + "8000",
+            "host " + "192" + ".168.10.25",
+            "customer_name" + "=example",
+            "if (enabled) { apply_mode(); }",
+            "Traceback " + "(most recent call last): build failed",
+            "file.c:128: error: undeclared identifier",
+            "file.c:128:4: warning: implicit declaration",
+            "private path " + "Q" + ":\\private\\board.c",
+        )
+        for detail in prohibited:
+            with self.subTest(detail=detail):
+                candidate = self.candidate()
+                candidate["summary"] = "Check apps/earphone/user/key_event.c and server_open first; " + detail
+                response = self.run_outbox(
+                    "enqueue", "--candidate-file", "-", "--sanitization-ack",
+                    SANITIZATION_ACK, candidate=candidate, expected_code=2,
+                )
+                self.assertFalse(response["ok"])
+        self.assertEqual(0, self.run_outbox("status")["pending_count"])
 
     def test_privacy_guard_rejects_paths_logs_keys_credentials_and_unknown_fields(self) -> None:
         self.grant()
